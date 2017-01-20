@@ -1,0 +1,56 @@
+<script>
+    window.MyBehaviors = window.MyBehaviors || {};
+    MyBehaviors.InvestmentBehavior = {
+        properties: {
+            capitalCallDelId: String,
+            distributionDelId: String,
+            delTag: String
+        },
+        _startAddCapitalCall: function() {
+            this.capitalCallTitle = "Add";
+            this.$.capitalCall.shadowRoot.querySelector('paper-dialog').toggle();
+        },
+        _onCapitalCallSave: function(e, data) {
+            this.$.capitalCall.shadowRoot.querySelector('paper-dialog').toggle();
+            this.onCommonInnerModuleSave(data, 'capitalCalls', false);
+        },
+        _editCapitalCall: function(e) {
+            var capitalCall = e.model.item;
+            this.capitalCallTitle = "Edit";
+            this.$.capitalCall.edit(capitalCall);
+            this.$.capitalCall.shadowRoot.querySelector('paper-dialog').toggle();
+        },
+        _delCapitalCall: function(e) {
+            this.capitalCallDelId = e.model.vIndex;
+            this.delTag = 'capitalCall';
+            this.$.deleteDlg.shadowRoot.querySelector('paper-dialog').toggle();
+        },
+        _onDeleteItem: function(e, data) {
+            if(this.delTag == 'capitalCall') {
+                this.splice('view.capitalCalls', this.capitalCallDelId, 1);
+            }else if(this.delTag == 'distribution') {
+                this.splice('view.distributions', this.capitalCallDelId, 1);
+            }
+            this.$.deleteDlg.shadowRoot.querySelector('paper-dialog').toggle();
+        },
+        _startDistribution: function() {
+          this.distributionTitle = "Add";
+          this.$.distribution.shadowRoot.querySelector('paper-dialog').toggle();
+        },
+        _onDistributionSave: function(e, data) {
+            this.$.distribution.shadowRoot.querySelector('paper-dialog').toggle();
+            this.onCommonInnerModuleSave(data, 'distributions');
+        },
+        _editDistribution: function(e) {
+            var distribution = e.model.item;
+            this.distributionTitle = "Edit";
+            this.$.distribution.edit(distribution);
+            this.$.distribution.shadowRoot.querySelector('paper-dialog').toggle();
+        },
+        _delDistribution: function(e) {
+            this.distributionDelId = e.model.vIndex;
+            this.delTag = 'distribution';
+            this.$.deleteDlg.shadowRoot.querySelector('paper-dialog').toggle();
+        }
+    }
+</script>

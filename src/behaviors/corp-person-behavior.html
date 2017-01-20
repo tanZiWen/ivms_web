@@ -1,0 +1,30 @@
+<script>
+    window.MyBehaviors = window.MyBehaviors || {};
+    MyBehaviors.CorpPersonBehavior = {
+        _editPerson: function(e) {
+            var person = e.model.item;
+            this.personTitle="Edit";
+            for (var i in person.workExperienceViews) {
+                this.getDictLabel(person.workExperienceViews[i]);
+            }
+            this.$.person.view = person;
+            var workExperienceDom = this.$.person.shadowRoot.querySelector('pc-work-experience');
+            workExperienceDom.edit({corpType: 3, corpId: this.view.id, corpTypeName: 'Fof Firm', corpName: this.view.name, primary: true});
+            this.$.person.shadowRoot.querySelector('paper-dialog').toggle();
+        },
+        _delPerson: function(e) {
+            this.$.deleteDlg.shadowRoot.querySelector('paper-dialog').toggle();
+            this.delId = e.model.item.id;
+            this.delName = "person";
+        },
+        _startAddPerson: function() {
+            this.personTitle = "Add";
+            this.handleTag = "fofFirmAdd";
+            this.delName = '';
+            var workExperienceDom = this.$.person.shadowRoot.querySelector('pc-work-experience');
+            workExperienceDom.edit({corpType: 3, corpId: this.view.id, corpTypeName: 'Fof Firm', corpName: this.view.name, primary: true});
+            workExperienceDom.domDisabled();
+            this.$.person.shadowRoot.querySelector('paper-dialog').toggle();
+        }
+    }
+</script>

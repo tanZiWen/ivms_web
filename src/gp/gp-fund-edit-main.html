@@ -1,0 +1,52 @@
+<dom-module id="gp-fund-edit-main">
+    <style is='custom-style' include='shared-styles'>
+        :host {
+          @apply(--layout-vertical)
+        }
+        paper-item.iron-selected {
+            background-color: #adacae;
+            color: #428bca;
+        }
+    </style>
+    <template>
+      <app-route route="[[route]]" pattern="/:edit_id" data="{{routeData}}"></app-route>
+      <div class="flex layout horizontal">
+          <div class="flex-10 layout vertical">
+              <paper-material elevation="3" class="flex">
+                  <neon-animated-pages selected="{{ page }}" attr-for-selected="name">
+                      <gp-fund-edit name="gpFund" edit-id="[[routeData.edit_id]]"></gp-fund-edit>
+                      <meeting-list name="meeting" showSelectionRelation="false"></meeting-list>
+                      <news-list name="news" showSelectionRelation="false"></news-list>
+                      <file-list name="file" showSelectionRelation="false"></file-list>
+                  </neon-animated-pages>
+              </paper-material>
+          </div>
+          <div class="flex-2">
+            <paper-menu style="background-color:#eee; cursor: pointer" selected="{{ page }}" attr-for-selected="name">
+                <paper-item name="gpFund"><paper-icon-button icon="settings"></paper-icon-button>GP Fund</paper-item>
+                <paper-item name="meeting"><paper-icon-button icon="settings"></paper-icon-button>GP Fund Meeting</paper-item>
+                <paper-item name="news"><paper-icon-button icon="settings"></paper-icon-button>GP Fund News</paper-item>
+                <paper-item name="file"><paper-icon-button icon="settings"></paper-icon-button>GP Fund File</paper-item>
+            </paper-menu>
+          </div>
+      </div>
+      <a href="/gp_funds">
+          <paper-fab icon="close" class="fab-b-r fab-cancel"></paper-fab>
+      </a>
+    </template>
+    <script>
+        Polymer({
+            is: 'gp-fund-edit-main',
+            properties: {
+                page: {
+                    type: String,
+                    value: 'gpFund'
+                },
+                editId: {
+                    type: Number
+                },
+                route: Object
+            }
+        });
+    </script>
+</dom-module>

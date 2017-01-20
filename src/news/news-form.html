@@ -1,0 +1,148 @@
+<link rel="import" href="./news-topic-form.html">
+<link rel="import" href="./news-topic-relation-form.html">
+<dom-module id="news-form">
+<style is='custom-style' include='shared-styles'></style>
+<template>
+
+    <iron-ajax id="reqGet"
+               url="{{host}}/file/{{file.id}}"
+               withCredentials=true
+               contentType="application/json"
+               on-response="onGetResponse"
+               handleAs="json">
+    </iron-ajax>
+    <iron-ajax id="reqSearchAdviser"
+               url="{{ host }}/advisers"
+               withCredentials=true
+               on-response="onSearchAdviserResponse"
+               handleAs="json">
+    </iron-ajax>
+
+    <paper-dialog id="form" style="width: 50%;" modal on-iron-overlay-opened="_loadData">
+        <paper-dialog-scrollable>
+            <h2>{{title}} news information</h2>
+            <div class="vertical layout" id="fileFormDialogContainer">
+                <div class="row">
+                    <div class="col-md-6">
+                        <paper-input label="Title" type="text" value="{{ news.title }}"/>
+                    </div>
+                    <div class="col-md-6">
+                        <paper-dropdown-menu label="Adviser" style="min-width: 100px;" >
+                            <paper-listbox id="fileSource" class="dropdown-content" selected="{{news.advType}}">
+                                <template is="dom-repeat" items="{{ adviserList }}">
+                                    <paper-item code="{{item.value}}">{{item.name}}</paper-item>
+                                </template>
+                            </paper-listbox>
+                        </paper-dropdown-menu>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12">
+                        <paper-input label="Url" value="{{ news.url }}" floatingLabel class='w100'></paper-input>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12">
+                        <paper-textarea id="notesAutoGrow" label="Notes" rows="3" value="{{ news.notes }}" class='w100'></paper-textarea>
+                    </div>
+                </div>
+
+                <!--Topic start-->
+                <div>
+                    <div class="row m-t-30">
+                        <div class="col-sm-12">
+                            <h3 style="width: 200px; display: inline-block; float: left;">Topics</h3>
+                            <div style="display: inline-block; float: right; margin: 18px 0;">
+                                <paper-fab mini icon="add" on-click="addTopic"></paper-fab>
+                            </div>
+                        </div>
+                    </div>
+                    <template is="dom-repeat" items="{{news.topics}}" as="topic">
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <paper-textarea label="Notes" rows="3" value="{{ topic.notes }}" class='w100'></paper-textarea>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <h4 style="width: 200px; display: inline-block; float: left;">Relations</h4>
+                                <div style="display: inline-block; float: right; margin: 18px 0;">
+                                    <paper-fab mini icon="add" on-click="addTopicRelation"></paper-fab>
+                                </div>
+                            </div>
+                            <div class="col-sm-12">
+                                <template is='dom-repeat' items="{{topic.relations }}" as="rel">
+                                    <div class="col-sm-4">
+                                        <paper-dropdown-menu label="Relation Type" style="min-width: 100px;" >
+                                            <paper-listbox class="dropdown-content" selected="{{rel.type}}">
+                                                <template is="dom-repeat" items="{{ dict.rel_type.list }}">
+                                                    <paper-item code="{{item.value}}">{{item.label}}</paper-item>
+                                                </template>
+                                            </paper-listbox>
+                                        </paper-dropdown-menu>
+                                    </div>
+                                    <div class="col-sm-4"><paper-input label="Name" type="text" value="{{ rel.notes }}"/></div>
+                                    <div class="col-sm-4"><paper-input label="rid" type="text" value="{{ rel.rid }}"/></div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+                <!--Topic end-->
+            </div>
+        </paper-dialog-scrollable>
+        <div class="row text-center m-t-20">
+            <paper-button raised dialog-dismiss>Cancel</paper-button>
+            <paper-button raised dialog-confirm class="custom green">Accept</paper-button>
+        </div>
+    </paper-dialog>
+    <news-topic-form id="topicForm"></news-topic-form>
+    <news-topic-relation-form id="topicRelationForm"></news-topic-relation-form>
+    <iron-signals on-iron-signal-dictionary="_onDictionaryChanged"></iron-signals>
+</template>
+<script>
+Polymer({
+    is: 'news-form',
+    LOG_TAG : 'news-form>',
+    ready: function() {
+        this.initData();
+    },
+    initData : function() {
+        this.news = {};
+        this.personsWithKeyword = [];
+        this.personSearcherOpened = false;
+        this.participantKeyword = '';
+        this.relationIndex = 0;
+        this.reference = {};
+        this.deletingTopic = {};
+        this.adviserList = [];
+    },
+    _onDictionaryChanged: function(e, data) {
+        this.dict = data;
+        this.$.reqSearchAdviser.generateRequest();
+    },
+
+    _loadData:function() {
+
+    },
+    behaviors: [
+        MyBehaviors.RefreshBehavior,
+        MyBehaviors.ConfigBehavior,
+        MyBehaviors.UtilBehavior
+    ],
+    addTopic: function(e) {
+        this.$.topicForm.shadowRoot.querySelector('paper-dialog').toggle();
+    },
+    addTopicRelation: function (e) {
+        this.$.topicRelationForm.shadowRoot.querySelector('paper-dialog').toggle();
+    },
+    onSearchAdviserResponse: function(e, req) {
+        this.adviserList = req.response.views;
+    },
+    computeRel: function(val) {
+        var relMap = this.parseMap(this.dict.rel_type, 'value');
+        return relMap[val].label;
+    }
+});
+</script>
+</dom-module>

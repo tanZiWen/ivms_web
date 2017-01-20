@@ -1,0 +1,18 @@
+<dom-module id="gp-fund-dropdown-item">
+    <style is='custom-style' include='shared-styles'></style>
+    <template>
+        <div class="row dp-item-row-2 pointer-cursor" on-tap="_selectGPFund">
+            <div class="col-md-12 text-center" style="font-weight: bold;">
+                <span>[[gpFund.name]]</span>
+            </div>
+        </div>
+    </template>
+    <script>
+        Polymer({
+            is: 'gp-fund-dropdown-item',
+            _selectGPFund: function() {
+                this.fire('select-gp-fund', this.gpFund);
+            }
+        })
+    </script>
+</dom-module>

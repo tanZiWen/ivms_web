@@ -1,0 +1,28 @@
+<script>
+    window.MyBehaviors = window.MyBehaviors || {};
+    MyBehaviors.EditBehavior = {
+        properties: {
+            editId: {
+                type: Number,
+                observer: '_onEditIdChanged'
+            },
+            view: {
+                type: Object,
+                notify: true,
+                value: function () {
+                    return {ownershipStructures: []}
+                }
+            }
+        },
+        _showEditDlg: function() {
+            this.title = "Edit";
+            this.$.form.view = this.view;
+            this.$.form.shadowRoot.querySelector('paper-dialog').toggle();
+        },
+        _onEditIdChanged: function(newVal, oldVal) {
+            if(newVal) {
+                this.$.reqList.generateRequest();
+            }
+        }
+    }
+</script>

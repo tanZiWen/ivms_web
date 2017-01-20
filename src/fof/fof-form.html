@@ -1,0 +1,313 @@
+<dom-module id='fof-form'>
+    <template>
+        <style is='custom-style' include='shared-styles'></style>
+        <iron-ajax id='reqSave'
+                   url='{{ host }}/fof'
+                   with-credentials
+                   handle-as='json'
+                   content-type="application/json"
+                   on-response='_onSaveResponse'
+                   last-error="_onRequestError"
+                   debounce-duration='5000'></iron-ajax>
+
+        <iron-localstorage name="dictionary" value="{{ dictionary }}"></iron-localstorage>
+        <paper-dialog id="form" style="width: 70%;" modal>
+            <paper-dialog-scrollable>
+                <h2>{{title}} FOF Information</h2>
+                <div class="vertical layout">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <paper-input id="name" error-message="This field is required" label="Name" type="text" value="{{ view.name }}"
+                                         required auto-validate/>
+                        </div>
+                        <div class="col-md-6">
+                            <paper-input label="Other Name" type="text" value="{{ view.alias }}"/>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <paper-dropdown-menu label="Select Geography" vertical-align="bottom"
+                                                 horizontal-align="left" class="fill-wd">
+                                <paper-listbox class="dropdown-content" selected="{{ view.geographyCode }}"
+                                               attr-for-selected="value" style="width:18em;">
+                                    <paper-item value=""></paper-item>
+                                    <template is="dom-repeat" items="{{ dictionary.geography.list}}">
+                                        <paper-item value="{{ item.value }}">{{ item.label }}</paper-item>
+                                    </template>
+                                </paper-listbox>
+                            </paper-dropdown-menu>
+                        </div>
+                        <div class="col-md-6">
+                            <paper-input label="Terms" type="text" value="{{ view.terms }}"/>
+                        </div>
+                    </div>
+                    <div class="row m-t-20">
+                        <div class="col-md-12">
+                            <template is="dom-repeat" items="{{ dictionary.industry_group.list }}">
+                                <paper-checkbox checked$="{{ contains(item.value, view.industryGroupCodes) }}"
+                                                on-change="_onIndustryGroupChange"></paper-checkbox>
+                                <span class="text-muted" value="{{item.value}}">{{item.label}}</span>
+                            </template>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <paper-input label="Investment Period" type="text" value="{{ view.investmentPeriod }}"/>
+                        </div>
+                        <div class="col-md-6">
+                            <paper-input label="Hurdle Rate" type="text" value="{{ view.hurdlerRate }}"/>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <paper-input label="Management Fee" type="text" value="{{ view.managementFree }}"/>
+                        </div>
+                        <div class="col-md-6">
+                            <paper-dropdown-menu label="Select Asset Class" vertical-align="bottom"
+                                                 horizontal-align="left" class="fill-wd">
+                                <paper-listbox class="dropdown-content" selected="{{ view.assetClassCode }}"
+                                               attr-for-selected="value" style="width:18em;">
+                                    <paper-item value=""></paper-item>
+                                    <template is="dom-repeat" items="{{ dictionary.asset_class.list}}">
+                                        <paper-item value="{{ item.value }}">{{ item.label }}</paper-item>
+                                    </template>
+                                </paper-listbox>
+                            </paper-dropdown-menu>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <paper-input label="GP Commitment" type="text" value="{{ view.gpCommitment }}"/>
+                        </div>
+                        <div class="col-md-6">
+                            <paper-input label="Vintage Year" type="text" value="{{ view.vintageYear }}"/>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <paper-dropdown-menu label="Select Currency" vertical-align="bottom" horizontal-align="left"
+                                                 class="fill-wd">
+                                <paper-listbox class="dropdown-content" selected="{{ view.currencyCode }}"
+                                               attr-for-selected="value" style="width:18em;">
+                                    <paper-item value=""></paper-item>
+                                    <template is="dom-repeat" items="{{ dictionary.currency.list}}">
+                                        <paper-item value="{{ item.value }}">{{ item.label }}</paper-item>
+                                    </template>
+                                </paper-listbox>
+                            </paper-dropdown-menu>
+                        </div>
+                        <div class="col-md-6">
+                            <paper-input label="Fund Size(Mn)" type="text" value="{{ view.fundSize }}"/>
+                        </div>
+
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <paper-input label="First Closing Date : YYYY-MM-DD" type="date"
+                                         value="{{ view.firstClosingDateStr }}"/>
+                        </div>
+                        <div class="col-md-6">
+                            <paper-input label="Final Closing Date : YYYY-MM-DD" type="date"
+                                         value="{{ view.finalClosingDateStr }}"/>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <paper-input label="Carry" type="text" value="{{ view.carry }}"/>
+                        </div>
+                        <div class="col-md-6">
+                            <paper-input label="Catch up" type="text" value="{{ view.catchUp }}"/>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 m-t-20">
+                            <div class="col-md-6">
+                                <span>Deal By Deal Carry</span>
+                            </div>
+                            <div class="col-md-6">
+                                <paper-toggle-button id="primary" checked={{view.dealByDealCarry}}></paper-toggle-button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <relation-index type-enabled=true add-enabled=true select-item-label="select fof firm" type="3" on-select="_onSelect" keyword="{{ view.fofFirmName }}" input-enabled="{{inputEnabled}}"></relation-index>
+                        </div>
+                    </div>
+                    <div class="row m-t-20">
+                        <div class="col-md-12">
+                            <h2>FOF Registration Information</h2>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <paper-dropdown-menu label="Select Currency" vertical-align="bottom" horizontal-align="left"
+                                                 class="fill-wd">
+                                <paper-listbox class="dropdown-content" selected="{{ view.currencyCode }}"
+                                               attr-for-selected="value" style="width:18em;">
+                                    <paper-item value=""></paper-item>
+                                    <template is="dom-repeat" items="{{ dictionary.currency.list}}">
+                                        <paper-item value="{{ item.value }}">{{ item.label }}</paper-item>
+                                    </template>
+                                </paper-listbox>
+                            </paper-dropdown-menu>
+                        </div>
+                        <div class="col-md-6">
+                            <paper-input label="Registration Amount(Mn)" type="text" value="{{ view.registrationAmount }}"/>
+                        </div>
+                    </div>
+                    <div class="row">
+
+                        <div class="col-md-6">
+                            <paper-input label="Registered Address" type="text" value="{{ view.registeredAddress }}"/>
+                        </div>
+                        <div class="col-md-6">
+                            <paper-input label="Registered Date: YYYY-MM-DD" type="date"
+                                         value="{{ view.registeredDateStr }}"/>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <paper-textarea label="Notes" value="{{ view.notes }}" rows=5></paper-textarea>
+                        </div>
+                    </div>
+                    <div class="row m-t-20">
+                        <div class="col-md-12">
+                            <h2>FOF Record Information</h2>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <paper-input label="Asset Management Association of China Record No." type="text" value="{{ view.amacRecordNo }}"/>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <paper-input label="Record Date: YYYY-MM-DD" type="date"
+                                         value="{{ view.recordedDateStr }}"/>
+                        </div>
+                    </div>
+                </div>
+            </paper-dialog-scrollable>
+            <div class="row text-center m-t-20">
+                <paper-button raised dialog-dismiss>Cancel</paper-button>
+                <paper-button raised class="custom green" on-tap="_onSave">Accept</paper-button>
+            </div>
+        </paper-dialog>
+        <pc-delete-item id="deleteDlg" on-delete-item="_onDeleteItem"></pc-delete-item>
+        <paper-toast id="toast" text="[[text]]"></paper-toast>
+    </template>
+</dom-module>
+<script>
+    Polymer({
+        is: 'fof-form',
+        properties: {
+            view: {
+                type: Object,
+                value: function () {
+                    return {ownershipStructures: []}
+                }
+            },
+            handleTag: {
+                type: String,
+                value: ''
+            }
+        },
+        behaviors: [
+            MyBehaviors.GlobalVariableBehavior,
+            MyBehaviors.ConfigBehavior
+        ],
+        _startAddOwnershipStructure: function () {
+            this.ownershipTitle = 'Add';
+            this.stockholderType = 'rel_fof_type';
+            this.$.ownershipStructure.shadowRoot.querySelector('paper-dialog').toggle();
+        },
+        editFof: function (fof) {
+            if (fof == null) {
+                this.fof = {};
+                return
+            }
+            this.fof = _.extend(fof, {});
+        },
+        _onSave: function () {
+            var invalid = true;
+            if (this.view.registeredDateStr && !this.view.registeredDateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                var registeredDate = Polymer.dom(this.$.viewFormDialog).querySelector('#registeredDate');
+                registeredDate.isInvalid = true;
+                invalid = false;
+            }
+            if (this.view.firstClosingDateStr && !this.view.firstClosingDateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                var firstClosingDate = Polymer.dom(this.$.viewFormDialog).querySelector('#firstClosingDate');
+                firstClosingDate.isInvalid = true;
+                invalid = false;
+            }
+            if (this.view.finalClosingDateStr && !this.view.finalClosingDateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                var finalClosingDate = Polymer.dom(this.$.viewFormDialog).querySelector('#finalClosingDate');
+                finalClosingDate.isInvalid = true;
+                invalid = false;
+            }
+            if (this.view.recordedDateStr && !this.view.recordedDateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                var recordDate = Polymer.dom(this.$.viewFormDialog).querySelector('#recordDate');
+                recordDate.isInvalid = true;
+                invalid = false;
+            }
+            if (!invalid) {
+                return;
+            }
+            this.set('view.registeredDate', new Date(this.view.registeredDateStr));
+            this.set('view.firstClosingDate', new Date(this.view.firstClosingDateStr));
+            this.set('view.finalClosingDate', new Date(this.view.finalClosingDateStr));
+            this.set('view.recordDate', new Date(this.view.recordedDateStr));
+            if (this.view.id) {
+                this.$.reqSave.method = 'PUT';
+            } else {
+                this.$.reqSave.method = 'POST';
+            }
+            if(!this.$.name.invalid && this.view.fofFirmName) {
+                this.$.reqSave.body = JSON.stringify(this.view);
+                this.$.reqSave.generateRequest();
+            }
+        },
+        contains: function(key, arrayObj) {
+            if(!arrayObj) {
+                return false;
+            } else {
+                for(var i in arrayObj) {
+                    if(arrayObj[i] == key) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        },
+        _onIndustryGroupChange: function (e) {
+            var currentCode = e.model.item.value;
+            if (!this.view.industryGroupCodes) {
+                this.view.industryGroupCodes=[];
+            }
+            if (e.target.checked) {
+                this.view.industryGroupCodes.push(currentCode);
+            } else {
+                for (var i in this.view.industryGroupCodes) {
+                    if (this.view.industryGroupCodes[i] == currentCode) {
+                        this.view.industryGroupCodes.splice(i, 1);
+                        break;
+                    }
+                }
+            }
+        },
+        _onTapCancel: function () {
+            this.fire('cancel');
+        },
+        _onSelect: function(e, data) {
+            this.view.fofFirmId = data.relation.id;
+            this.view.fofFirmName = data.relation.name;
+        },
+        relationInputEnabled: function() {
+            if(this.handleTag == 'fofFirmAdd') {
+                this.inputEnabled = true;
+            }else {
+                this.inputEnabled = false;
+            }
+        }
+    });
+
+</script>

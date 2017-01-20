@@ -1,0 +1,30 @@
+<script>
+    window.MyBehaviors = window.MyBehaviors || {};
+    MyBehaviors.RefreshBehavior = {
+        properties: {
+            LOG_TAG: 'pc-refreshable >',
+            lastRefreshTimestamp: {
+                type: Number,
+                notify: true,
+                value: 0
+            },
+            expire: {
+                type: Number,
+                value: 0
+            }
+        },
+        refreshMaybe : function() {
+            var expire = (this.expire || 5 * 60) * 1000;
+            var now = new Date().getTime();
+
+            console.log(this.LOG_TAG, 'refresh maybe.', this.refresh);
+
+            if(now > this.lastRefreshTimestamp + expire && this.refresh != null) {
+                this.refresh();
+            }
+        },
+        doneRefresh : function() {
+            this.lastRefreshTimestamp = new Date().getUTCSeconds();
+        }
+    };
+</script>

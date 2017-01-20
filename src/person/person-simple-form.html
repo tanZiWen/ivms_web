@@ -1,0 +1,74 @@
+<dom-module id="person-simple-form">
+    <style is='custom-style' include='shared-styles'></style>
+    <template>
+      <iron-ajax id='reqSave'
+                 url='{{ host }}/person'
+                 method='POST'
+                 with-credentials
+                 handle-as='json'
+                 content-type="application/json"
+                 on-response='_onSaveResponse'
+                 on-error="_onRequestError"
+                 debounce-duration='5000'></iron-ajax>
+
+       <div class="row text-left">
+           <div class="row">
+               <div class="col-md-12">
+                   <h2>Add Simple Person</h2>
+               </div>
+           </div>
+           <div class="row">
+               <div class="col-md-6">
+                 <paper-input id="name" error-message="This field is required" label="Name" value="{{ person.name }}" required auto-validate></paper-input>
+               </div>
+               <div class="col-md-6">
+                   <paper-input label="English Name" value="{{ person.enname }}" floatingLabel class='w100'></paper-input>
+               </div>
+           </div>
+           <div class="row">
+               <div class="col-md-6">
+                   <paper-input label="Tel" value="{{ person.tel }}" floatingLabel></paper-input>
+               </div>
+               <div class="col-md-6">
+                   <paper-input label="Email" value="{{ person.email }}" floatingLabel></paper-input>
+               </div>
+           </div>
+           <div class="row">
+               <div class="col-md-12">
+                   <paper-textarea label="Education background" value="{{ person.edu }}"></paper-textarea>
+               </div>
+           </div>
+           <div class="row">
+               <div class="col-sm-12">
+                    <paper-textarea label="Notes" value="{{ person.notes }}"></paper-textarea>
+               </div>
+           </div>
+       </div>
+    </template>
+    <script>
+        Polymer({
+            is: 'person-simple-form',
+            properties: {
+                person: {
+                    type: Object,
+                    value: function() {
+                        return {}
+                    }
+                }
+            },
+            behaviors: [
+                MyBehaviors.GlobalVariableBehavior
+            ],
+            save: function() {
+                if(!this.$.name.invalid) {
+                    this.$.reqSave.body = JSON.stringify(this.person);
+                    this.$.reqSave.generateRequest();
+                }
+            },
+            _onSaveResponse: function(e, resquest) {
+                var person = e.detail.response.person;
+                this.fire('saved', person);
+            }
+        });
+    </script>
+</dom-module>

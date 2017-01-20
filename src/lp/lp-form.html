@@ -1,0 +1,125 @@
+<dom-module name="lp-form">
+    <style is='custom-style' include='shared-styles'></style>
+    <template>
+        <iron-ajax id='reqSave'
+                   url='{{ host }}/lp'
+                   with-credentials
+                   handle-as='json'
+                   content-type="application/json"
+                   on-response='_onSaveResponse'
+                   last-error="_onRequestError"
+                   debounce-duration='5000'>
+        </iron-ajax>
+        <iron-localstorage name="dictionary" value="{{ dictionary }}"></iron-localstorage>
+        <paper-dialog id="form" style="width: 70%;" modal>
+            <h2>{{title}} LP Information</h2>
+
+            <div class="vertical layout">
+                <div class="row">
+                    <div class="col-md-12">
+                        <paper-input id="name" label="Name" error-message="This field is required" label="LP Name" type="text" value="{{ view.name }}"
+                                     required auto-validate/>
+                    </div>
+                </div>
+                <div class="m-t-10">
+                    <h2>LP Investment Information</h2>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <paper-input label="Investment Name" type="text" value="{{ view.investmentName }}"/>
+                    </div>
+                    <div class="col-md-6">
+                        <paper-input label="Commitment Amount" type="text" value="{{ view.commitmentAmount }}"/>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <paper-dropdown-menu label="Select Currency" vertical-align="bottom" horizontal-align="left"
+                                             class="fill-wd">
+                            <paper-listbox class="dropdown-content" selected="{{ view.currencyCode }}"
+                                           attr-for-selected="value" style="width:18em;">
+                                <paper-item value=""></paper-item>
+                                <template is="dom-repeat" items="{{ dictionary.currency.list}}">
+                                    <paper-item value="{{ item.value }}">{{ item.label }}</paper-item>
+                                </template>
+                            </paper-listbox>
+                        </paper-dropdown-menu>
+                    </div>
+                    <div class="col-md-6">
+                        <paper-input label="Commitment Date: YYYY-MM-DD" type="date" value="{{ view.commitmentDateStr }}"
+                                     error="Bad date format. YYYY-MM-DD is OK"/>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <paper-textarea label="Notes" value="{{ view.notes }}" rows=5></paper-textarea>
+                    </div>
+                </div>
+                <div class="row text-center m-t-20">
+                    <paper-button raised dialog-dismiss on-tap="_onCancel">Cancel</paper-button>
+                    <paper-button raised class="custom green" on-tap="_onSave">Accept</paper-button>
+                </div>
+            </div>
+        </paper-dialog>
+        <pc-delete-item id="deleteDlg" on-delete-item="_onDeleteItem"></pc-delete-item>
+        <paper-toast id="toast" text="[[text]]"></paper-toast>
+    </template>
+    <script>
+        Polymer({
+            is: 'lp-form',
+            properties: {
+                view: {
+                    type: Object,
+                    value: function () {
+                        return {ownershipStructures: []}
+                    }
+                }
+            },
+            behaviors: [
+                MyBehaviors.RefreshBehavior,
+                MyBehaviors.ConfigBehavior,
+                MyBehaviors.GlobalVariableBehavior
+            ],
+            _startAddOwnershipStructure: function () {
+                this.title = 'Add';
+                this.stockholderType = 'rel_fofFirm_type';
+                this.$.ownershipStructure.shadowRoot.querySelector('paper-dialog').toggle();
+            },
+            edit: function (data) {
+                var view  = data;
+                if (view.commitmentDate != null) {
+                    view.commitmentDateStr = moment(view.commitmentDate).format("YYYY-MM-DD");
+                }
+                this.view = view;
+            },
+            _onCancel: function () {
+                this.reset();
+            },
+            reset: function () {
+                this.view = {};
+            },
+            _onSave: function () {
+                var invalid = true;
+                if (this.view.commitmentDateStr && !this.view.commitmentDateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                    var commitmentDate = Polymer.dom(this.$.viewFormDialog).querySelector('#commitmentDate');
+                    commitmentDate.isInvalid = true;
+                    invalid = false;
+                }
+                if (!invalid) {
+                    return;
+                }
+                this.set('view.commitmentDate', new Date(this.view.commitmentDateStr));
+
+                if (this.view.id) {
+                    this.$.reqSave.method = 'PUT';
+                } else {
+                    this.$.reqSave.method = 'POST';
+                }
+                if(!this.$.name.invalid) {
+                    this.$.reqSave.body = JSON.stringify(this.view);
+                    this.$.reqSave.generateRequest();
+                }
+            }
+        });
+    </script>
+</dom-module>

@@ -1,0 +1,133 @@
+<dom-module id="relation-index">
+    <style is='custom-style' include='shared-styles'></style>
+    <template>
+        <iron-ajax id="reqSearchRelation"
+                url="{{host}}/search"
+                method="GET"
+                with-credentials="true"
+                on-response="_onSearchRelationResponse"
+                debounce-duration='5000'>
+        </iron-ajax>
+        <div class="col-md-4" hidden$="[[typeEnabled]]">
+            <relation-type-form id="relationTypeForm" relation-type-enabled="[[relationTypeEnabled]]" type-enabled="[[typeEnabled]]" relation-type="[[relationType]]" on-selected-type="_onTypeSelect"></relation-type-form>
+        </div>
+        <div class="col-md-4">
+            <relation-dropdown-item id="relationSelected" input-enabled="{{inputEnabled}}" select-item-label="{{selectItemLabel}}" opened="{{relationSearcherOpened}}" keyword="{{keyword}}" type="{{type}}" relations="{{relations}}" on-select-dropdown-item="_onSelectRelationDropdownItem" on-search="_onSearchRelation"></relation-dropdown-item>
+        </div>
+        <div class="col-md-4" hidden$="[[addEnabled]]">
+            <paper-fab mini icon="add" on-tap="_startAddRelation"></paper-fab>
+            <relation-simple-form id="simpleForm" relation-type="{{type}}" on-relation-saved="_relationSaved"></relation-simple-form>
+        </div>
+    </template>
+    <script>
+        Polymer({
+            is: 'relation-index',
+            properties: {
+                type: Number,
+                relations: {
+                    type: Array,
+                    value: function() {
+                        return []
+                    }
+                },
+                typeEnabled: {
+                    type: Boolean,
+                    value: false
+                },
+                relationSearcherOpened: {
+                    type: Boolean,
+                    notify: true,
+                    value: false
+                },
+                relationType: {
+                    type: String,
+                    observer: '_relationTypeChanged'
+                },
+                keyword: {
+                    type: String
+                },
+                addEnabled: {
+                    type: Boolean,
+                    value: false
+                },
+                inputEnabled:  Boolean,
+                relationTypeLabel: {
+                    type: String,
+                    value: 'Investor'
+                },
+                relationType: String,
+                type: String
+            },
+            behaviors: [
+                MyBehaviors.ConfigBehavior,
+                MyBehaviors.GlobalVariableBehavior
+            ],
+            _onSelectRelationDropdownItem: function(e, data) {
+               this.relationSearcherOpened = false;
+               this.fire('select', {type: this.type, relation: data});
+            },
+            _relationSaved: function(e, data) {
+                this.keyword = data.name;
+                this.fire('select', {type: this.type, relation: data})
+            },
+            _onSearchRelation: function(e, keyword) {
+                if(keyword == null || keyword == '') {
+                    this.relationsWithKeyword = {};
+                } else {
+                    this.keyword = keyword;
+                    this.$.reqSearchRelation.params = {type : this.type, keyword : keyword};
+                    this.$.reqSearchRelation.generateRequest();
+                }
+            },
+            _onSearchRelationResponse: function(e, response) {
+                var relations = [];
+                switch(parseInt(this.type)) {
+                    case 1:
+                        relations = response.response.persons;
+                        break;
+                    case 2:
+                        relations = response.response.companies;
+                        break;
+                    case 3:
+                        relations = response.response.companies;
+                        break;
+                    case 4:
+                        relations = response.response.companies;
+                        break;
+                    case 5:
+                        relations = response.response.companies;
+                        break;
+                    case 6:
+                        relations = response.response.companies;
+                        break;
+                    case 7:
+                        relations = response.response.companies;
+                        break;
+                }
+                this.relations = relations;
+                if(relations.length != 0) {
+                    this.relationSearcherOpened = true;
+                }
+            },
+            _startAddRelation: function() {
+                this.$.simpleForm.shadowRoot.querySelector('paper-dialog').toggle();
+            },
+            edit: function(data) {
+                this.type = data.type;
+                this.keyword = data.keyword;
+            },
+            relationTypeDisabled: function() {
+                this.relationTypeEnabled = true;
+            },
+            relationSelectedDisabled: function() {
+                this.inputEnabled = true;
+            },
+            relationSimpleFormHidden: function() {
+                this.addEnabled = true;
+            },
+            _onTypeSelect: function(e, type) {
+                this.type = type;
+            }
+        });
+    </script>
+</dom-module>

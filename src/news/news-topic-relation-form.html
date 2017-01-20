@@ -1,0 +1,51 @@
+<dom-module id="news-topic-relation-form">
+    <style is='custom-style' include='shared-styles'></style>
+    <template>
+        <paper-dialog style="width: 50%;" modal >
+            <paper-dialog-scrollable>
+                <h2>{{title}} news topic relation information</h2>
+                <div class="col-sm-12">
+                    <div class="col-sm-4">
+                        <paper-dropdown-menu label="Relation Type" style="min-width: 100px;" >
+                            <paper-listbox class="dropdown-content" selected="{{relation.type}}">
+                                <template is="dom-repeat" items="{{ dict.rel_type.list }}">
+                                    <paper-item code="{{item.value}}">{{item.label}}</paper-item>
+                                </template>
+                            </paper-listbox>
+                        </paper-dropdown-menu>
+                    </div>
+                    <div class="col-sm-4"><paper-input label="Name" type="text" value="{{ relation.name }}"/></div>
+                    <div class="col-sm-4"><paper-input label="rid" type="text" value="{{ relation.rid }}"/></div>
+                </div>
+            </paper-dialog-scrollable>
+            <div class="row text-center m-t-20">
+                <paper-button raised dialog-dismiss>Cancel</paper-button>
+                <paper-button raised dialog-confirm class="custom green">Accept</paper-button>
+            </div>
+        </paper-dialog>
+        <pc-datasource></pc-datasource>
+        <iron-signals on-iron-signal-dictionary="_onDictionaryChanged"></iron-signals>
+    </template>
+    <script>
+        Polymer({
+            is: 'news-topic-relation-form',
+            LOG_TAG : 'news-topic-relation-form>',
+            properties: {
+                relation: {
+                    type: Object,
+                    notify: true
+                }
+            },
+            _onDictionaryChanged: function(e, data) {
+                this.dict = data;
+            },
+            ready: function() {
+                this.initData();
+            },
+            initData: function() {
+                this.relation = {};
+            }
+
+        });
+    </script>
+</dom-module>

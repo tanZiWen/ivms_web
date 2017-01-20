@@ -1,0 +1,150 @@
+<dom-module name="gp-firm-form">
+    <style is='custom-style' include='shared-styles'></style>
+    <template>
+        <iron-ajax id='reqSave'
+                   url='{{ host }}/gpFirm'
+                   with-credentials
+                   handle-as='json'
+                   content-type="application/json"
+                   on-response='_onSaveResponse'
+                   last-error="_onRequestError"
+                   debounce-duration='5000'></iron-ajax>
+        <iron-localstorage name="dictionary" value="{{ dictionary }}"></iron-localstorage>
+        <paper-dialog id="form" style="width: 70%;" modal>
+          <paper-dialog-scrollable>
+            <h2>{{title}} GP Firm Information</h2>
+            <div class="vertical layout">
+                <div class="row">
+                    <div class="col-md-6">
+                        <paper-input id="name" label="Name" error-message="This field is required" type="text" value="{{ view.name }}"
+                                     required auto-validate/>
+                    </div>
+                    <div class="col-md-6">
+                        <paper-input label="Other Name" type="text" value="{{ view.otherName }}"/>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <paper-dropdown-menu label="Select Geography" vertical-align="bottom" horizontal-align="left"
+                                             class="fill-wd">
+                            <paper-listbox class="dropdown-content" selected="{{ view.geographyCode }}"
+                                           attr-for-selected="value">
+                                <paper-item value=""></paper-item>
+                                <template is="dom-repeat" items="{{ dictionary.geography.list}}">
+                                    <paper-item value="{{ item.value }}">{{ item.label }}</paper-item>
+                                </template>
+                            </paper-listbox>
+                        </paper-dropdown-menu>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <paper-textarea label="Notes" value="{{ view.notes }}" rows=5></paper-textarea>
+                    </div>
+                </div>
+                <div class="m-t-10">
+                    <h2>GP Firm Registration Information</h2>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <paper-dropdown-menu label="Select Currency" vertical-align="bottom" horizontal-align="left"
+                                             class="fill-wd">
+                            <paper-listbox class="dropdown-content" selected="{{ view.currencyCode }}"
+                                           attr-for-selected="value" style="width:18em;">
+                                <paper-item value=""></paper-item>
+                                <template is="dom-repeat" items="{{ dictionary.currency.list}}">
+                                    <paper-item value="{{ item.value }}">{{ item.label }}</paper-item>
+                                </template>
+                            </paper-listbox>
+                        </paper-dropdown-menu>
+                    </div>
+                    <div class="col-md-6">
+                        <paper-input label="Registration Amount(Mn)" type="text" value="{{ view.registrationAmount }}"/>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <paper-input label="Registered Address" type="text" value="{{ view.registeredAddress }}"/>
+                    </div>
+                    <div class="col-md-6">
+                        <paper-input label="Registered Date: YYYY-MM-DD" type="date" value="{{ view.registeredDateStr }}"
+                                     error="Bad date format. YYYY-MM-DD is OK"/>
+                    </div>
+                </div>
+                <div class="row m-t-20">
+                    <div class="col-md-12">
+                        <h2>GP Firm Record Information</h2>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <paper-input label="Asset Management Association of China Record No." type="text" value="{{ view.amacRecordNo }}"/>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <paper-input label="Record Date: YYYY-MM-DD" type="date"
+                                     value="{{ view.recordedDateStr }}"/>
+                    </div>
+                </div>
+            </div>
+          </paper-dialog-scrollable>
+          <div class="row text-center m-t-20">
+              <paper-button raised dialog-dismiss>Cancel</paper-button>
+              <paper-button raised class="custom green" on-tap="_onSave">Accept</paper-button>
+          </div>
+        </paper-dialog>
+        <pc-delete-item id="deleteDlg" on-delete-item="_onDeleteItem"></pc-delete-item>
+        <paper-toast id="toast" text="[[text]]"></paper-toast>
+    </template>
+    <script>
+        Polymer({
+            is: 'gp-firm-form',
+            properties: {
+                view: {
+                    type: Object,
+                    value: function () {
+                        return {ownershipStructures: []}
+                    }
+                }
+            },
+            behaviors: [
+                MyBehaviors.GlobalVariableBehavior,
+                MyBehaviors.RefreshBehavior,
+                MyBehaviors.ConfigBehavior
+            ],
+            _startAddOwnershipStructure: function () {
+                this.title = 'Add';
+                this.stockholderType = 'rel_gpFirm_type';
+                this.$.ownershipStructure.shadowRoot.querySelector('paper-dialog').toggle();
+            },
+            _onSave: function () {
+                var invalid = true;
+                if (this.view.registeredDateStr && !this.view.registeredDateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                    var registeredDate = Polymer.dom(this.$.viewFormDialog).querySelector('#registeredDate');
+                    registeredDate.isInvalid = true;
+                    invalid = false;
+                }
+                if (this.view.recordedDateStr && !this.view.recordedDateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                    var recordDate = Polymer.dom(this.$.viewFormDialog).querySelector('#recordDate');
+                    recordDate.isInvalid = true;
+                    invalid = false;
+                }
+                if (!invalid) {
+                    return;
+                }
+                this.set('view.registeredDate', new Date(this.view.registeredDateStr));
+                this.set('view.recordDate', new Date(this.view.recordedDateStr));
+                if (this.view.id) {
+                    this.$.reqSave.method = 'PUT';
+                } else {
+                    this.$.reqSave.method = 'POST';
+                }
+                if(!this.$.name.invalid) {
+                    this.$.reqSave.body = JSON.stringify(this.view);
+                    this.$.reqSave.generateRequest();
+                }
+            }
+        });
+    </script>
+</dom-module>

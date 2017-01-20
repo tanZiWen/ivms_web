@@ -1,0 +1,20 @@
+<dom-module id="pc-delete-item">
+    <style is='custom-style' include='shared-styles'></style>
+    <template>
+        <paper-dialog id="deleteDlg" style="width: 30%;">
+            <h4>Are you sure to delete this item ?</h4>
+            <div class="row text-center m-t-20">
+                <paper-button  dialog-dismiss>Cancel</paper-button>
+                <paper-button class="custom red" on-tap="_onDelete">Accept</paper-button>
+            </div>
+        </paper-dialog>
+    </template>
+    <script>
+        Polymer({
+            is: 'pc-delete-item',
+            _onDelete: function(e) {
+                this.fire('delete-item');
+            }
+        });
+    </script>
+<dom-module>

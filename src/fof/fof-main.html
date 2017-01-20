@@ -1,0 +1,132 @@
+<dom-module id='fof-main'>
+    <template>
+        <style is='custom-style' include='shared-styles'></style>
+        <iron-ajax id='reqList'
+                   url='{{host}}/fof'
+                   method='GET'
+                   with-credentials
+                   handle-as='json'
+                   on-response='_onListResponse'
+                   on-error="_onRequestError"
+                   debounce-duration='5000'></iron-ajax>
+
+        <iron-ajax id="reqSave"
+                   url='{{host}}/fof'
+                   method="POST"
+                   withCredentials=true
+                   contentType="application/json"
+                   handle-as='json'
+                   on-response='_onSaveResponse'
+                   on-error="_onRequestError">
+        </iron-ajax>
+
+        <iron-ajax id='reqDel'
+                   url='{{host}}/fof/{{ delId }}'
+                   method='DELETE'
+                   with-credentials
+                   handle-as='json'
+                   on-response='_onDelResponse'
+                   on-error="_onRequestError"
+                   debounce-duration='5000'></iron-ajax>
+
+        <div id="main" class="fill mc">
+             <div class="pan fill-wd ct-m">
+                 <div class="row col-md-offset-2">
+                     <div class="col-md-6">
+                        <paper-input label="Input FOF Name" type="text" value="{{filter}}"></paper-input>
+                     </div>
+                     <div class="col-ms-2">
+                         <paper-button raised class="m-v-m" style="display: inline-block; float: left; margin-left: 30px;" on-tap="refresh">
+                             <span>Search</span>
+                         </paper-button>
+                     </div>
+                 </div>
+             </div>
+             <div class="fill-wd ct-l m-t-30">
+                 <template is="dom-repeat" items="{{ views }}">
+                     <div class="fill-wd layout vertical card">
+                         <div class="hsr">
+                             <div class="flex-7"><span><a class="link-nu" href="javascript: void(0);">{{ item.name }}</a></span></div>
+                         </div>
+                         <div class="hsr">
+                             <div class="flex-11 text-muted">
+                                 <span>{{item.alias}}</span>
+                             </div>
+                             <div class="flex-1 text-center">
+                                 <a href="/fof_edit/{{item.id}}">
+                                    <paper-icon-button icon="create"></paper-icon-button>
+                                 </a>
+                                 <paper-icon-button icon="close" on-tap="_showDelDialog"></paper-icon-button>
+                             </div>
+                         </div>
+                     </div>
+                 </template>
+                 <template is="dom-if" if="{{ !isEmptyViews }}">
+                   <div class="fill-wd m-t-20">
+                       <pc-pager pager="{{pager}}" on-page="_gotoPage"></pc-pager>
+                   </div>
+                 </template>
+             </div>
+             <template is="dom-if" if="{{ isEmptyViews }}">
+               <div class="pan fill-wd ct-l m-t-30">
+                   <div class="fill-wd">
+                       <h3 class="text-center text-danger m-t-20">No records found.</h3>
+                   </div>
+               </div>
+             </template>
+          </div>
+          <paper-fab icon="add" class="fab-b-r fab-success" on-tap="_onTapAdd"></paper-fab>
+          <fof-form id="form" title="{{ title }}" on-save="refresh"></fof-form>
+          <pc-delete-item id="deleteDlg" on-delete-item="_onDeleteItem"></pc-delete-item>
+        </div>
+    </template>
+</dom-module>
+<script>
+    Polymer({
+        is: 'fof-main',
+        ready: function() {
+            this.refresh();
+        },
+        properties: {
+            filter: {
+                type: String,
+                value: ""
+            },
+            pager: {
+                type: Object, 
+                notify: true,
+                value: {
+                    page: 0
+                }
+            },
+            delId: {
+                type: Number
+            }
+        },
+        behaviors: [
+            MyBehaviors.GlobalVariableBehavior,
+            MyBehaviors.RefreshBehavior,
+            MyBehaviors.ConfigBehavior
+        ],
+        refresh: function() {
+            this.$.reqList.params = {name: this.filter, page: this.pager.page};
+            this.$.reqList.generateRequest();
+        },
+        _onListResponse: function(e, request) {
+            this.views = request.response.companies;
+            this.pager = request.response.pager;
+            if(this.views == null || this.views.length == 0) {
+                this.isEmptyViews = true;
+            }else {
+                this.isEmptyViews = false;
+            }
+            this.doneRefresh();
+        },
+        _onTapAdd: function() {
+            this.title = "Add";
+            this.$.form.handleTag = '';
+            this.$.form.relationInputEnabled();
+            this.$.form.shadowRoot.querySelector('paper-dialog').toggle();
+        }
+    });
+</script>

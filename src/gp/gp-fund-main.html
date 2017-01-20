@@ -1,0 +1,128 @@
+<dom-module id='gp-fund-main'>
+    <style is='custom-style' include='shared-styles'></style>
+    <template>
+      <iron-ajax id='reqList'
+                 url='{{ host }}/gpFund'
+                 method='GET'
+                 with-credentials
+                 handle-as='json'
+                 on-response='onListResponse'
+                 last-error="onRequestError"
+                 debounce-duration='5000'></iron-ajax>
+
+     <iron-ajax id='reqDel'
+                url='{{host}}/gpFund/{{ delId }}'
+                method='DELETE'
+                with-credentials
+                handle-as='json'
+                on-response='_onDelResponse'
+                on-error="_onRequestError"
+                debounce-duration='5000'></iron-ajax>
+
+     <div id="main" class="fill mc">
+         <div class="pan fill-wd ct-m">
+             <div class="row">
+                 <div class="col-md-4 col-md-offset-1">
+                     <paper-input label="Input GP Fund Name" type="text" value="{{filter.name}}"></paper-input>
+                 </div>
+                 <div class="col-md-4">
+                     <paper-input label="Type keyword to search gp firm" type="text" value="{{filter.gpFirmId}}"></paper-input>
+                 </div>
+                 <div class="col-md-2">
+                   <paper-button raised class="m-v-m" style="display: inline-block;float: left; margin-left: 30px;" on-tap="refresh">
+                       <span>Search</span>
+                   </paper-button>
+                 </div>
+             </div>
+         </div>
+         <div class="fill-wd ct-l m-t-30">
+             <template is="dom-repeat" items="{{views}}">
+                 <div class="fill-wd layout vertical card">
+                     <div class="hsr">
+                         <div class="flex-7"><span><a class="link-nu" href="javascript: void(0);">{{ item.name }}</a></span></div>
+                     </div>
+                     <div class="hsr">
+                         <div class="flex-10 text-muted">
+                              <span>{{item.alias}}</span>
+                         </div>
+                         <div class="flex-2 text-center">
+                             <a href="/gp_funds_edit/{{item.id}}">
+                                <paper-icon-button icon="create"></paper-icon-button>
+                             </a>
+                             <paper-icon-button icon="close" on-click="_showDelDialog"></paper-icon-button>
+                         </div>
+                     </div>
+                 </div>
+             </template>
+             <template is="dom-if" if="{{ !isEmptyViews }}">
+               <div class="fill-wd m-t-20">
+                   <pc-pager pager="{{pager}}" on-page="_gotoPage"></pc-pager>
+               </div>
+             </template>
+         </div>
+         <template is="dom-if" if="{{ isEmptyViews }}">
+             <div class="pan fill-wd ct-l m-t-30">
+                 <div class="fill-wd">
+                     <h3 class="text-center text-danger m-t-20">No records found.</h3>
+                 </div>
+             </div>
+         </template>
+         <paper-fab icon="add" class="fab-b-r fab-success" on-tap="_onTapAdd"></paper-fab>
+         <gp-fund-form id="form" title="{{title}}" on-save="refresh"></gp-fund-form>
+         <pc-delete-item id="deleteDlg" on-delete-item="_onDeleteItem"></pc-delete-item>
+     </div>
+    </template>
+    <script>
+        Polymer({
+            is: 'gp-fund-main',
+            ready: function() {
+                this.refresh();
+            },
+            behaviors: [
+                MyBehaviors.GlobalVariableBehavior,
+                MyBehaviors.RefreshBehavior,
+                MyBehaviors.ConfigBehavior
+
+            ],
+            properties: {
+                pager: {
+                    type: Object, 
+                    notify: true,
+                    value: {
+                        page: 0
+                    }
+                },
+                filter: {
+                    type: Object,
+                    value: function() {
+                        return {name: '', gpFirmId: ''}
+                    }
+                }
+            },
+            refresh: function() {
+                this.$.reqList.params = {name: this.filter.name, gpFirmId: this.filter.gpFirmId, page: this.pager.page};
+                this.$.reqList.generateRequest();
+            },
+            onListResponse: function(e, request) {
+                this.views = request.response.companies;
+                this.pager = request.response.pager;
+                if(this.views == null || this.views.length == 0) {
+                    this.isEmptyViews = true;
+                }else {
+                    this.isEmptyViews = false;
+                }
+                this.doneRefresh();
+            },
+            onRequestError: function(e) {
+                this.fire('core-signal', {
+                    name: 'toast',
+                    data: {type: 'warning', message: 'Request failed.'}
+                });
+            },
+            _onTapAdd: function() {
+                this.title = "Add";
+                this.$.form.shadowRoot.querySelector('paper-dialog').toggle();
+            }
+        });
+    </script>
+</dom-module>

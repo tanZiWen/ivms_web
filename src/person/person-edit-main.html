@@ -1,0 +1,50 @@
+<dom-module id="person-edit-main">
+      <style is='custom-style' include='shared-styles'>
+      :host {
+        @apply(--layout-vertical)
+      }
+      paper-item.iron-selected {
+          background-color: #adacae;
+          color: #428bca;
+      }
+    </style>
+    <template>
+        <app-route route="[[route]]" pattern="/:edit_id" data="{{routeData}}"></app-route>
+        <div class="flex layout horizontal">
+            <div class="flex-10 layout vertical">
+                <paper-material elevation="3" class="flex">
+                    <neon-animated-pages selected="{{ page }}" attr-for-selected="name">
+                        <person-edit name="person" edit-id="[[routeData.edit_id]]"></person-edit>
+                        <meeting-list name="meeting" showSelectionRelation="false"></meeting-list>
+                        <news-list name="news" showSelectionRelation="false"></news-list>
+                        <file-list name="file" showSelectionRelation="false"></file-list>
+                    </neon-animated-pages>
+                </paper-material>
+            </div>
+            <div class="flex-2">
+              <paper-menu style="background-color:#eee; cursor: pointer" selected="{{ page }}" attr-for-selected="name">
+                  <paper-item name="person"><paper-icon-button icon="settings"></paper-icon-button>Person</paper-item>
+                  <paper-item name="meeting"><paper-icon-button icon="settings"></paper-icon-button>Person Meeting</paper-item>
+                  <paper-item name="news"><paper-icon-button icon="settings"></paper-icon-button>Person News</paper-item>
+                  <paper-item name="file"><paper-icon-button icon="settings"></paper-icon-button>Person File</paper-item>
+              </paper-menu>
+            </div>
+        </div>
+        <a href="/person">
+            <paper-fab icon="close" class="fab-b-r fab-cancel"></paper-fab>
+        </a>
+    </div>
+    </template>
+    <script>
+        Polymer({
+            is: 'person-edit-main',
+            properties: {
+                page: {
+                    type: String,
+                    value: 'person'
+                },
+                route: Object
+            }
+        });
+    </script>
+</dom-module>

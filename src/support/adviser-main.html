@@ -1,0 +1,140 @@
+<link rel="import" href="adviser-form.html">
+<dom-module id="adviser-main">
+    <style is='custom-style' include='shared-styles'></style>
+    <template>
+        <iron-ajax id='reqList'
+                   url='{{host}}/advisers'
+                   method='GET'
+                   with-credentials
+                   handle-as='json'
+                   on-response='onListResponse'
+                   on-error="onRequestError"
+                   debounce-duration='5000'>
+        </iron-ajax>
+
+        <iron-ajax id='reqDel'
+                   url='{{host}}/adviser/{{ deletingView.id }}'
+                   method='DELETE'
+                   with-credentials
+                   handle-as='json'
+                   on-response='onDelResponse'
+                   on-error="onRequestError"
+                   debounce-duration='5000'>
+        </iron-ajax>
+
+        <div id="main" class="fill mc">
+            <div class="pan fill-wd ct-m">
+                <div class="row col-md-offset-2">
+                    <div class="col-md-6">
+                        <paper-input label="Input Adviser Name" type="text" value="{{filter}}"></paper-input>
+                    </div>
+                    <div class="col-ms-2">
+                        <paper-button raised class="m-v-m" style="display: inline-block;float: left; margin-left: 30px;" on-tap="gotoPage">
+                            <span>Search</span>
+                        </paper-button>
+                    </div>
+                </div>
+            </div>
+            <div class="fill-wd ct-l m-t-30">
+                <template is="dom-repeat" items="{{views}}">
+                    <div class="fill-wd layout vertical card">
+                        <div class="hsr">
+                            <div class="flex-7"><span><a class="link-nu" href="javascript: void(0);">{{item.name}}</a></span></div>
+                        </div>
+                        <div class="hsr">
+                            <div class="flex-10 text-muted">
+                                <span>最后修改：</span>
+                                <span>{{item.modifyTimeStr}}</span>
+                            </div>
+                            <div class="flex-2 text-center">
+                                <paper-icon-button icon="create" on-click="_showEditDialog"></paper-icon-button>
+                                <paper-icon-button icon="close" on-click="_showDelDialog"></paper-icon-button>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+                <div class="fill-wd m-t-20">
+                    <pc-pager pager="{{pager}}" on-page="gotoPage"></pc-pager>
+                </div>
+            </div>
+            <template is="dom-if" if="{{ isEmptyViews }}">
+                <div class="pan fill-wd ct-l m-t-30">
+                    <div class="fill-wd">
+                        <h3 class="text-center text-danger m-t-20">No records found.</h3>
+                    </div>
+                </div>
+            </template>
+        </div>
+        <paper-fab icon="add" class="fab-b-r fab-success" on-tap="_onTapAdd"></paper-fab>
+        <adviser-form id="form" title="{{ title }}" on-save="gotoPage"></adviser-form>
+        <paper-dialog id="deleteDlg" style="width: 30%;" backdrop=true>
+            <h4>Are you sure to delete {{name}} ?</h4>
+            <div class="row text-center m-t-20">
+                <paper-button dialog-dismiss>Cancel</paper-button>
+                <paper-button dialog-confirm class="custom red">Sure</paper-button>
+            </div>
+        </paper-dialog>
+    </template>
+    <script>
+        Polymer({
+            is: 'adviser-main',
+            ready: function() {
+                this.refresh();
+            },
+            behaviors: [
+                MyBehaviors.RefreshBehavior,
+                MyBehaviors.ConfigBehavior
+            ],
+            properties: {
+                name: {
+                    type: String,
+                    value: ""
+                },
+                pager: {
+                    type: Object,
+                    notify: true,
+                    value: {
+                        page: 0
+                    }
+                }
+            },
+            refresh: function() {
+                this.$.reqList.params = {name: this.filter, page: this.pager.page};
+                this.$.reqList.generateRequest();
+            },
+            gotoPage: function() {
+                this.refresh();
+            },
+            search: function() {
+                this.refresh();
+            },
+            onListResponse: function(e, response) {
+                this.views = response.response.views;
+                this.pager = response.response.pager;
+                if (this.views == null || this.views.length == 0) {
+                    this.isEmptyViews = true;
+                }else {
+                    this.isEmptyViews = false;
+                }
+                this.doneRefresh();
+            },
+            onRequestError: function(e) {
+                this.fire('core-signal', {
+                    name: 'toast',
+                    data: {type: 'warning', message: 'Request failed.'}
+                });
+            },
+            _onTapAdd: function() {
+                this.title = "Add";
+                this.$.form.shadowRoot.querySelector('paper-dialog').toggle();
+            },
+            _showEditDialog: function() {
+                this.title = "Edit";
+                this.$.form.shadowRoot.querySelector('paper-dialog').toggle();
+            },
+            _showDelDialog: function(e) {
+                this.$.deleteDlg.toggle();
+            }
+        });
+    </script>
+</dom-module>

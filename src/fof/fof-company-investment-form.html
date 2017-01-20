@@ -1,0 +1,165 @@
+<dom-module id="fof-company-investment-form">
+    <template>
+      <style is='custom-style' include='shared-styles'></style>
+      <iron-ajax id='reqSave'
+                 url='{{ host }}/companyInvestment'
+                 method='POST'
+                 with-credentials
+                 handle-as='json'
+                 content-type="application/json"
+                 on-response='_onSaveResponse'
+                 last-error="_onRequestError"
+                 debounce-duration='5000'></iron-ajax>
+
+        <iron-localstorage name="dictionary" value="{{ dictionary }}"></iron-localstorage>
+        <paper-dialog id="form" style="width: 80%;" modal>
+            <paper-dialog-scrollable>
+                <h2>{{title}} FOF Company Investment Structure</h2>
+                <div class="vertical layout">
+                    <div class="row">
+                        <company-investment id="companyInvestment" on-select-company-investment="_onSelectCompanyInvestment"></company-investment>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <paper-input label="Investment Date" type="date" value="{{ view.investmentDateStr }}"/>
+                        </div>
+                        <div class="col-md-6">
+                            <paper-input label="Ownership" type="text" value="{{ view.ownership }}"/>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <paper-dropdown-menu label="Select Currency" vertical-align="bottom" horizontal-align="left" class="fill-wd">
+                                <paper-listbox class="dropdown-content" selected="{{ view.currencyCode }}" attr-for-selected="value">
+                                    <paper-item value=""></paper-item>
+                                    <template is="dom-repeat" items="{{ dictionary.currency.list}}">
+                                        <paper-item value="{{ item.value }}">{{ item.label }}</paper-item>
+                                    </template>
+                                </paper-listbox>
+                            </paper-dropdown-menu>
+                        </div>
+                        <div class="col-md-6">
+                            <paper-input label="Investment Amount(Mn)" type="text" value="{{ view.investmentAmount }}"/>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <paper-input label="Investment type" type="text" value="{{ view.investmentType }}"/>
+                        </div>
+                        <div class="col-md-6">
+                            <paper-input label="Board Seat" type="text" value="{{ view.boardSeat }}"/>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <paper-textarea label="Notes" value="{{ view.notes }}" rows=5></paper-textarea>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="row m-t-20">
+                            <div class="col-md-11">
+                                <h2>FOF Company Investment Capital Call</h2>
+                            </div>
+                            <div class="col-md-1">
+                                <paper-fab mini icon="add" on-tap="_startAddCapitalCall"></paper-fab>
+                            </div>
+                        </div>
+                        <fof-investment-capital-call id="capitalCall" title="[[capitalCallTitle]]" on-capital-call-save="_onCapitalCallSave"></fof-investment-capital-call>
+                        <table class="table mm-box m-t-20">
+                            <thead>
+                            <tr class="th-inverse">
+                                <th style="width: 15%">Due Date</th>
+                                <th style="width: 15%">Call Date</th>
+                                <th style="width: 20%">Currency</th>
+                                <th style="width: 20%">Amount</th>
+                                <th style="width: 5%">&nbsp;</th>
+                                <th style="width: 5%">&nbsp;</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                                <template is="dom-repeat" items="[[view.capitalCalls]]" index-as="vIndex">
+                                    <tr>
+                                        <td>[[item.dueDateStr]]</td>
+                                        <td>[[item.dueDateStr]]</td>
+                                        <td>[[item.currency]]</td>
+                                        <td>[[item.amount]]</td>
+                                        <td>
+                                            <paper-icon-button icon="create" on-click="_editCapitalCall"></paper-icon-button>
+                                        </td>
+                                        <td>
+                                            <paper-icon-button icon="close" on-click="_delCapitalCall"></paper-icon-button>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="row">
+                        <div class="row m-t-20">
+                            <div class="col-md-11">
+                                <h2>FOF Company Investment Distribution</h2>
+                            </div>
+                            <div class="col-md-1">
+                                <paper-fab mini icon="add" on-tap="_startDistribution"></paper-fab>
+                            </div>
+                        </div>
+                        <fof-investment-distribution id="distribution" title="[[distributionTitle]]" on-distribution-save="_onDistributionSave"></fof-investment-distribution>
+                        <table class="table mm-box m-t-20">
+                            <thead>
+                            <tr class="th-inverse">
+                              <tr class="th-inverse">
+                                  <th style="width: 15%">Date</th>
+                                  <th style="width: 15%">Curency</th>
+                                  <th style="width: 20%">Amount</th>
+                                  <th style="width: 20%">From</th>
+                                  <th style="width: 5%">&nbsp;</th>
+                                  <th style="width: 5%">&nbsp;</th>
+                              </tr>
+                            </tr>
+                            </thead>
+                            <tbody>
+                                <template is="dom-repeat" items="[[view.distributions]]" index-as="vIndex">
+                                    <tr>
+                                        <td>[[item.dateStr]]</td>
+                                        <td>[[item.currency]]</td>
+                                        <td>[[item.amount]]</td>
+                                        <td>[[item.amount]]</td>
+                                        <td>
+                                            <paper-icon-button icon="create" on-click="_editDistribution"></paper-icon-button>
+                                        </td>
+                                        <td>
+                                            <paper-icon-button icon="close" on-click="_delDistribution"></paper-icon-button>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </paper-dialog-scrollable>
+            <div class="row text-center m-t-20">
+                <paper-button raised dialog-dismiss>Cancel</paper-button>
+                <paper-button raised class="custom green" on-tap="_onSave">Accept</paper-button>
+            </div>
+        </paper-dialog>
+    </template>
+    <script>
+        Polymer({
+            is: 'fof-company-investment-form',
+            properties: {
+                view: {
+                    type: Object,
+                    value: function() {
+                        return {capitalCalls:[], distributions: []}
+                    }
+                }
+            },
+            behaviors: [
+                MyBehaviors.GlobalVariableBehavior,
+                MyBehaviors.ConfigBehavior,
+                MyBehaviors.InvestmentBehavior,
+                MyBehaviors.CompanyInvestmentBehavior
+            ]
+        });
+    </script>
+</dom-module>

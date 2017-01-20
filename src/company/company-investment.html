@@ -1,0 +1,88 @@
+<dom-module id="company-investment">
+    <template>
+      <iron-ajax id="reqSearchRelation"
+              url="{{host}}/search"
+              method="GET"
+              with-credentials="true"
+              on-response="_onSearchRelationResponse"
+              debounce-duration='5000'></iron-ajax>
+        <div class="row">
+            <div class="col-md-6">
+                <paper-input style="float: left; width: 12em;" value="{{companyName}}" on-keyup="_onKeywordChanged" label="input company name" disabled="{{inputEnabled}}"></paper-input>
+                <template is="dom-if" if="[[companyOpened]]">
+                    <div class="row" style="max-height: 400px; width: 12em; overflow: scroll; margin-top: 4em; margin-left: 0.2em; position: absolute; z-index: 1000; border-left: 1px solid #efefef; background-color: #FFFFFF;">
+                        <template is="dom-repeat" items="{{companies}}">
+                            <company-dropdown-item company="[[item]]" on-select-company="_onSelectCompanyDropdownItem"></company-dropdown-item>
+                        </template>
+                    </div>
+                </template>
+            </div>
+            <div class="col-md-6">
+                <paper-input style="float: left; width: 14em; margin-left: 20px" value="{{companyRoundName}}" label="input company round name" disabled="{{inputEnabled}}"></paper-input>
+                <template is="dom-if" if="[[roundOpened]]">
+                    <div class="row" style="max-height: 400px; width: 12em; overflow: scroll; margin-top: 4em; margin-left: 14em; position: absolute; z-index: 1000; border-left: 1px solid #efefef; background-color: #FFFFFF;">
+                        <template is="dom-repeat" items="[[financingRounds]]">
+                            <company-financingRound-item financing-round="[[item]]" name="7" on-select-financing-round="_onSelectFinancingRoundDropdownItem"></company-financingRound-item>
+                        </template>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </template>
+    <script>
+        Polymer({
+            is: 'company-investment',
+            properties: {
+                financingRound: {
+                    type: Object,
+                    value: function() {
+                        return {}
+                    }
+                },
+                params: {
+                    type: Object,
+                    value: function() {
+                        return {}
+                    }
+                }
+            },
+            behaviors: [
+                MyBehaviors.GlobalVariableBehavior
+            ],
+            _onKeywordChanged: function(e) {
+                this.$.reqSearchRelation.params = {type : 7, keyword : this.companyName};
+                this.$.reqSearchRelation.generateRequest();
+            },
+            _onSearchRelationResponse: function(e, request) {
+                if (request.response.code == 200 || request.response.code == null) {
+                    this.companies = request.response.companies;
+                    this.companyOpened = true;
+                }
+            },
+            reset: function() {
+              this.companyName = '';
+              this.companyRoundName = '';
+              this.financingRounds = {};
+            },
+            _onSelectCompanyDropdownItem: function(e, data) {
+                this.companyName = data.name;
+                this.companyOpened = false;
+                this.financingRounds = data.financingRounds
+                this.roundOpened = true;
+                this.params.companyName = data.name;
+                this.params.companyId = data.id;
+            },
+            _onSelectFinancingRoundDropdownItem: function(e, data) {
+                this.roundOpened = false;
+                this.companyRoundName = data.name;
+                this.params.financingRoundCode = data.code;
+                this.params.financingRoundName = data.name;
+                this.fire('select-company-investment', this.params);
+            },
+            edit: function(data) {
+                this.companyName = data.companyName
+                this.companyRoundName = data.financingRoundName;
+            }
+        });
+    </script>
+</dom-module>

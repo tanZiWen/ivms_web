@@ -1,0 +1,18 @@
+<dom-module id="gp-firm-dropdown-item">
+    <style is='custom-style' include='shared-styles'></style>
+    <template>
+        <div class="row dp-item-row-2 pointer-cursor" on-tap="_selectGPFirm">
+            <div class="col-md-12 text-center" style="font-weight: bold;">
+                <span>[[gpFirm.name]]</span>
+            </div>
+        </div>
+    </template>
+    <script>
+        Polymer({
+            is: 'gp-firm-dropdown-item',
+            _selectGPFirm: function() {
+                this.fire('select-gp-firm', this.gpFirm);
+            }
+        })
+    </script>
+</dom-module>

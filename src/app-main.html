@@ -1,0 +1,372 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/app-route/app-location.html">
+<link rel="import" href="../bower_components/app-route/app-route.html">
+<link rel="import" href="../bower_components/app-layout/app-drawer-layout/app-drawer-layout.html">
+<link rel="import" href="../bower_components/app-layout/app-drawer/app-drawer.html">
+<link rel="import" href="../bower_components/app-layout/app-header/app-header.html">
+<link rel="import" href="../bower_components/app-layout/app-header-layout/app-header-layout.html">
+<link rel="import" href="../bower_components/app-layout/app-toolbar/app-toolbar.html">
+
+<link rel="import" href="../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../bower_components/iron-selector/iron-selector.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../bower_components/iron-localstorage/iron-localstorage.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">
+
+<link rel="import" href="../bower_components/paper-drawer-panel/paper-drawer-panel.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/paper-menu/paper-menu.html">
+
+<link rel="import" href="../bower_components/paper-material/paper-material.html">
+<link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
+
+<link rel="import" href="my-icons.html">
+
+<link rel="import" href="behaviors/util-behavior.html">
+
+<link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../bower_components/paper-dialog-scrollable/paper-dialog-scrollable.html">
+
+<link rel="import" href="behaviors/config-behavior.html">
+<link rel="import" href="behaviors/global-variable-behavior.html">
+<link rel="import" href="behaviors/refresh-behavior.html">
+<link rel="import" href="behaviors/edit-behavior.html">
+<link rel="import" href="behaviors/corp-person-behavior.html">
+<link rel="import" href="behaviors/investment-behavior.html">
+<link rel="import" href="behaviors/capital-call-behavior.html">
+<link rel="import" href="behaviors/distribution-behavior.html">
+<link rel="import" href="behaviors/company-investment-behavior.html">
+
+<link rel="import" href="common/pc-datasource.html">
+<link rel="import" href="common/pc-pager.html">
+
+<link rel="import" href="styles/shared-styles.html">
+<script src="scripts/underscore-1.5.2.min.js"></script>
+<script src="scripts/moment.js"></script>
+<dom-module id="app-main">
+    <template>
+        <style include='shared-styles'>
+            :host {
+                display: block;
+                --app-primary-color: #3f2860;
+                --app-secondary-color: black;
+            }
+
+            #main {
+            @apply(- -layout-vertical)
+            }
+
+            app-toolbar, app-header {
+                background-color: var(--app-primary-color);
+                color: #fff;
+            }
+
+            app-header paper-icon-button {
+                --paper-icon-button-ink-color: white;
+            }
+
+            .drawer-list a {
+                display: block;
+                padding: 0 16px;
+                line-height: 48px;
+                text-decoration: none;
+                color: var(--app-secondary-color);
+            }
+
+            .drawer-list a.iron-selected {
+                color: black;
+                font-weight: bold;
+            }
+
+            .drawer-list a.iron-selected {
+                background-color: #90c5a9;
+                color: #ffffff;
+            }
+
+        </style>
+
+        <iron-ajax id='reqList'
+                   url='[[host]]/menuTree'
+                   method='GET'
+                   with-credentials
+                   handle-as='json'
+                   on-response='_onListResponse'
+                   last-error="onRequestError"
+                   debounce-duration='5000'></iron-ajax>
+
+        <app-location route="{{route}}"></app-location>
+        <app-route route="{{route}}" pattern="/:page" data="{{routeData}}" tail="{{subroute}}"></app-route>
+        <app-drawer-layout fullbleed>
+            <!-- Drawer content -->
+            <app-drawer>
+                <app-toolbar>
+                    <paper-icon-button icon="menu"></paper-icon-button>
+                    <div title>IVMS</div>
+                </app-toolbar>
+                <div style="overflow-y: scroll; height: 100%">
+                    <iron-selector selected="[[active]]" attr-for-selected="name" class="drawer-list" role="navigation">
+                        <template is="dom-repeat" items="[[menuTree]]" index-as="vIndex">
+                            <a name="[[item.funcAction]]" href="/[[item.funcAction]]">[[item.name]]</a>
+                            <template is="dom-if" if="[[item.divider]]">
+                                 <hr class="divider">
+                            </template>
+                        </template>
+                    </iron-selector>
+                </div>
+            </app-drawer>
+
+            <div role="main" id="main" style="height: 100%;">
+                <app-toolbar>
+                </app-toolbar>
+                <iron-pages selected="[[routeData.page]]" attr-for-selected="name" class="flex layout vertical">
+                    <lp-main name="lp"></lp-main>
+                    <fof-main name="fof"></fof-main>
+                    <fof-edit-main name="fof_edit" class="flex" route="{{fofRoute}}"></fof-edit-main>
+                    <fof-firm-main name="fof_firms"></fof-firm-main>
+                    <fof-firm-edit-main name="fof_firms_edit" class="flex"
+                                        route="{{fofFirmsRoute}}"></fof-firm-edit-main>
+                    <gp-firm-main name="gp_firms"></gp-firm-main>
+                    <gp-firm-edit-main name="gp_firms_edit" class="flex" route="{{gpFirmsRoute}}"></gp-firm-edit-main>
+                    <gp-fund-main name="gp_funds"></gp-fund-main>
+                    <gp-fund-edit-main name="gp_funds_edit" class="flex" route="{{gpFundsRoute}}"></gp-fund-edit-main>
+                    <person-main name="person"></person-main>
+                    <person-edit-main name="person_edit" class="flex" route="{{personRoute}}"></person-edit-main>
+                    <company-main name="company"></company-main>
+                    <company-edit-main name="company_edit" class="flex" route="{{companyRoute}}"></company-edit-main>
+                    <file-list name="file"></file-list>
+                    <meeting-main name="meeting"></meeting-main>
+                    <news-list name="news"></news-list>
+                </iron-pages>
+            </div>
+        </app-drawer-layout>
+        <pc-datasource id="datasource"></pc-datasource>
+    </template>
+    <script>
+
+        Polymer({
+            is: 'app-main',
+            ready: function () {
+                // listen for online/offline
+                Polymer.RenderStatus.afterNextRender(this, function () {
+                    this.listen(window, 'online', '_notifyNetworkStatus');
+                    this.listen(window, 'offline', '_notifyNetworkStatus');
+                });
+            },
+            properties: {
+                page: {
+                    type: String,
+                    observer: '_pageChanged'
+                }
+            },
+            behaviors: [
+                MyBehaviors.GlobalVariableBehavior,
+                MyBehaviors.UtilBehavior
+            ],
+            observers: [
+                '_routePageChanged(routeData.page)',
+                '_subrouteChanged(subroute)'
+            ],
+            _routePageChanged: function (page) {
+                if(!page) {
+                  window.location.href = "/lp";
+                }
+                if(!this.menuTree) {
+                  this.$.reqList.generateRequest();
+                }
+                this.$.datasource.requestDict();
+                this.page = page || "lp";
+                // Scroll to the top of the page on every *route* change. Use `Polymer.AppLayout.scroll`
+                // with `behavior: 'silent'` to disable header scroll effects during the scroll.
+                Polymer.AppLayout.scroll({top: 0, behavior: 'silent'});
+            },
+            _subrouteChanged: function (subroute) {
+                if (subroute) {
+                    switch (subroute.prefix) {
+                        case '/fof_edit':
+                            this.fofRoute = subroute;
+                            break;
+                        case '/fof_firms_edit':
+                            this.fofFirmsRoute = subroute;
+                            break;
+                        case '/gp_firms_edit':
+                            this.gpFirmsRoute = subroute;
+                            break;
+                        case '/gp_funds_edit':
+                            this.gpFundsRoute = subroute;
+                            break;
+                        case '/company_edit':
+                            this.companyRoute = subroute;
+                            break;
+                        case '/person_edit':
+                            this.personRoute = subroute;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            },
+            _pageChanged: function (page) {
+                // this.menuTree = [
+                //   {
+                //       funcAction: 'lp',
+                //       name: 'LP',
+                //       divider: true
+                //   },
+                //   {
+                //       funcAction: 'fof_firms',
+                //       name: 'FOF Firm',
+                //       divider: false
+                //   },
+                //   {
+                //       funcAction: 'fof',
+                //       name: 'FOF',
+                //       divider: true
+                //   },
+                //   {
+                //       funcAction: 'gp_firms',
+                //       name: 'GP Firms',
+                //       divider: false
+                //   },
+                //   {
+                //       funcAction: 'gp_funds',
+                //       name: 'GP Funds',
+                //       divider: true
+                //   },
+                //   {
+                //       funcAction: 'company',
+                //       name: 'Company',
+                //       divider: false
+                //   },
+                //   {
+                //       funcAction: 'person',
+                //       name: 'Person',
+                //       divider: true
+                //   },
+                //   {
+                //       funcAction: 'meeting',
+                //       name: 'Meeting',
+                //       divider: false
+                //   },
+                //   {
+                //       funcAction: 'news',
+                //       name: 'News',
+                //       divider: false
+                //   },
+                //   {
+                //       funcAction: 'file',
+                //       name: 'File',
+                //       divider: true
+                //   }
+                // ];
+                var configDicts = {
+                    pages: {
+                        'lp': 'lp/lp-main.html',
+                        'fof': 'fof/fof-main.html',
+                        'fof_edit': 'fof/fof-edit-main.html',
+                        'fof_firms': 'fof/fof-firm-main.html',
+                        'fof_firms_edit': 'fof/fof-firm-edit-main.html',
+                        'gp_firms': 'gp/gp-firm-main.html',
+                        'gp_firms_edit': 'gp/gp-firm-edit-main.html',
+                        'gp_funds': 'gp/gp-fund-main.html',
+                        'gp_funds_edit': 'gp/gp-fund-edit-main.html',
+                        'company': 'company/company-main.html',
+                        'company_edit': 'company/company-edit-main.html',
+                        'person': 'person/person-main.html',
+                        'person_edit': 'person/person-edit-main.html'
+                    },
+                    lazyPages: {
+                        'lp': 'lazy-module-resource/lazy-lp-resource.html',
+                        'fof': 'lazy-module-resource/lazy-fof-resource.html',
+                        'fof_firms': 'lazy-module-resource/lazy-fof-firms-resource.html',
+                        'gp_firms': 'lazy-module-resource/lazy-gp-firms-resource.html',
+                        'gp_funds': 'lazy-module-resource/lazy-gp-funds-resource.html',
+                        'person': 'lazy-module-resource/lazy-person-resource.html',
+                        'company': 'lazy-module-resource/lazy-company-resource.html'
+                    },
+                    requirePages: {
+                        'fof_edit': 'fof/fof-edit.html',
+                        'fof_firms_edit': 'fof/fof-firm-edit.html',
+                        'gp_firms_edit': 'gp/gp-firm-edit.html',
+                        'gp_funds_edit': 'gp/gp-fund-edit.html',
+                        'company_edit': 'company/company-edit.html',
+                        'person_edit': 'person/person-edit.html'
+                    },
+                    pairKeys: {
+                        'fof_edit': 'fof',
+                        'fof_firms_edit': 'fof_firms',
+                        'gp_firms_edit': 'gp_firms',
+                        'gp_funds_edit': 'gp_funds',
+                        'company_edit': 'company',
+                        'person_edit': 'person'
+                    }
+                };
+                var isRequireKey = _.contains(_.keys(configDicts.requirePages), page);
+
+                if (!isRequireKey) {
+                    this.active = page
+                } else {
+                    this.active = configDicts.pairKeys[page];
+                }
+                console.log('page:', page);
+                this.importHref(
+                        this.resolveUrl(configDicts.pages[page]), function () {
+                            if (isRequireKey) {
+                                this.importHref(this.resolveUrl(configDicts.requirePages[page]), function () {
+                                    this._ensureLazyLoaded(configDicts.lazyPages[configDicts.pairKeys[page]]);
+                                }, null, null, true);
+                                return;
+                            }
+                            this._ensureLazyLoaded(configDicts.lazyPages[page]);
+                        }, null, true);
+
+            },
+            _onListResponse: function(e, request) {
+                if(request.status == 200) {
+                  this.menuTree = request.response;
+                }
+            },
+            _ensureLazyLoaded: function (lazyPage) {
+                // load lazy resources after render and set `loadComplete` when done.
+                if (!this.loadComplete) {
+                    Polymer.RenderStatus.afterNextRender(this, function () {
+                        this.importHref(this.resolveUrl('lazy-resources.html'), function () {
+                            // Register service worker if supported.
+                            if ('serviceWorker' in navigator) {
+                                navigator.serviceWorker.register('/service-worker.js');
+                            }
+                            this._notifyNetworkStatus();
+                            this.loadComplete = true;
+                        });
+                    });
+                }
+                Polymer.RenderStatus.afterNextRender(this, function () {
+                    this.importHref(this.resolveUrl(lazyPage), null, null, true);
+                });
+            },
+            _notifyNetworkStatus: function () {
+                var oldOffline = this.offline;
+                this.offline = !navigator.onLine;
+                // Show the snackbar if the user is offline when starting a new session
+                // or if the network status changed.
+                if (this.offline || (!this.offline && oldOffline === true)) {
+                    if (!this._networkSnackbar) {
+                        this._networkSnackbar = document.createElement('shop-snackbar');
+                        Polymer.dom(this.root).appendChild(this._networkSnackbar);
+                    }
+                    Polymer.dom(this._networkSnackbar).innerHTML = this.offline ?
+                            'You are offline' : 'You are online';
+                    this._networkSnackbar.open();
+                }
+            }
+        });
+    </script>
+</dom-module>

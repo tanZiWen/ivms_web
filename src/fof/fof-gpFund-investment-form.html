@@ -1,0 +1,205 @@
+<dom-module id="fof-gpFund-investment-form">
+    <template>
+      <style is='custom-style' include='shared-styles'></style>
+      <iron-ajax id='reqSave'
+                 url='{{ host }}/gpFundInvestment'
+                 method='POST'
+                 with-credentials
+                 handle-as='json'
+                 content-type="application/json"
+                 on-response='_onSaveResponse'
+                 last-error="_onRequestError"
+                 debounce-duration='5000'></iron-ajax>
+
+        <iron-localstorage name="dictionary" value="{{ dictionary }}"></iron-localstorage>
+        <paper-dialog id="form" style="width: 80%;" modal>
+            <paper-dialog-scrollable>
+                <h2>{{title}} FOF GP Fund Investment Structure</h2>
+                <div class="vertical layout">
+                    <div class="row">
+                        <div class="col-md-6 text-left">
+                            <relation-index id="relationIndex" name="4" type="4" type-enabled="false" on-select="_onSelect"></relation-index>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <paper-input label="Commitment Date" type="date" value="{{ view.commitmentDateStr }}"/>
+                        </div>
+                        <div class="col-md-6">
+                            <paper-dropdown-menu label="Select Currency" vertical-align="bottom" horizontal-align="left" class="fill-wd">
+                                <paper-listbox class="dropdown-content" selected="{{ view.currencyCode }}" attr-for-selected="value">
+                                    <paper-item value=""></paper-item>
+                                    <template is="dom-repeat" items="{{ dictionary.currency.list}}">
+                                        <paper-item value="{{ item.value }}">{{ item.label }}</paper-item>
+                                    </template>
+                                </paper-listbox>
+                            </paper-dropdown-menu>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <paper-input label="Commitment Amount(Mn)" type="text" value="{{ view.commitmentAmount }}"/>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <paper-textarea label="Notes" value="{{ view.notes }}" rows=5></paper-textarea>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="row m-t-20">
+                            <div class="col-md-11">
+                                <h2>FOF GP Fund Investment Capital Call</h2>
+                            </div>
+                            <div class="col-md-1">
+                                <paper-fab mini icon="add" on-tap="_startAddCapitalCall"></paper-fab>
+                            </div>
+                        </div>
+                        <fof-investment-capital-call id="capitalCall" title="[[capitalCallTitle]]" on-capital-call-save="_onCapitalCallSave"></fof-investment-capital-call>
+                        <table class="table mm-box m-t-20">
+                            <thead>
+                            <tr class="th-inverse">
+                                <th style="width: 15%">Due Date</th>
+                                <th style="width: 15%">Call Date</th>
+                                <th style="width: 20%">Currency</th>
+                                <th style="width: 20%">Amount</th>
+                                <th style="width: 5%">&nbsp;</th>
+                                <th style="width: 5%">&nbsp;</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <template is="dom-repeat" items="[[view.capitalCalls]]" index-as="vIndex">
+                                <tr>
+                                    <td>[[item.dueDateStr]]</td>
+                                    <td>[[item.dueDateStr]]</td>
+                                    <td>[[item.currency]]</td>
+                                    <td>[[item.amount]]</td>
+                                    <td>
+                                        <paper-icon-button icon="create" on-click="_editCapitalCall"></paper-icon-button>
+                                    </td>
+                                    <td>
+                                        <paper-icon-button icon="close" on-click="_delCapitalCall"></paper-icon-button>
+                                    </td>
+                                </tr>
+                            </template>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="row">
+                        <div class="row m-t-20">
+                            <div class="col-md-11">
+                                <h2>FOF GP Fund Investment Distribution</h2>
+                            </div>
+                            <div class="col-md-1">
+                                <paper-fab mini icon="add" on-tap="_startDistribution"></paper-fab>
+                            </div>
+                        </div>
+                        <fof-investment-distribution id="distribution" title="[[distributionTitle]]" on-distribution-save="_onDistributionSave"></fof-investment-distribution>
+                        <table class="table mm-box m-t-20">
+                            <thead>
+                              <tr class="th-inverse">
+                                  <th style="width: 15%">Date</th>
+                                  <th style="width: 15%">Curency</th>
+                                  <th style="width: 20%">Amount</th>
+                                  <th style="width: 20%">From</th>
+                                  <th style="width: 5%">&nbsp;</th>
+                                  <th style="width: 5%">&nbsp;</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                            <template is="dom-repeat" items="[[view.distributions]]" index-as="vIndex">
+                                <tr>
+                                    <td>[[item.dateStr]]</td>
+                                    <td>[[item.currency]]</td>
+                                    <td>[[item.amount]]</td>
+                                    <td>[[item.amount]]</td>
+                                    <td>
+                                        <paper-icon-button icon="create" on-click="_editDistribution"></paper-icon-button>
+                                    </td>
+                                    <td>
+                                        <paper-icon-button icon="close" on-click="_delDistribution"></paper-icon-button>
+                                    </td>
+                                </tr>
+                            </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </paper-dialog-scrollable>
+            <div class="row text-center m-t-20">
+                <paper-button raised dialog-dismiss>Cancel</paper-button>
+                <paper-button raised class="custom green" on-tap="_onSave">Accept</paper-button>
+            </div>
+        </paper-dialog>
+        <pc-delete-item id="deleteDlg" on-delete-item="_onDeleteItem"></pc-delete-item>
+    </template>
+    <script>
+        Polymer({
+            is: 'fof-gpFund-investment-form',
+            properties: {
+                view: {
+                    type: Object,
+                    value: function() {
+                        return {capitalCalls:[], distributions: []}
+                    }
+                }
+            },
+            behaviors: [
+                MyBehaviors.GlobalVariableBehavior,
+                MyBehaviors.ConfigBehavior,
+                MyBehaviors.InvestmentBehavior
+            ],
+            _onSelect: function(e, data) {
+                this.view.gpFundId = data.relation.id;
+                this.view.gpFundName = data.relation.name;
+            },
+            _onSave: function() {
+                var invalid = true;
+                if (this.view.commitmentDateStr && !this.view.commitmentDateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                    this.$.commitmentDate.invalid = true;
+                    invalid = false;
+                }
+                if (!invalid) {
+                    return;
+                }
+                this.view.commitmentDate = new Date(this.view.commitmentDateStr);
+                if(this.view.gpFundName) {
+                    this.$.reqSave.body = JSON.stringify(this.view);
+                    this.$.reqSave.generateRequest();
+                }
+            },
+            _onSaveResponse: function(e, request) {
+                if(request.response.code == 200 || request.response.code == null) {
+                    this.view = {capitalCalls:[], distributions: []};
+                    this.$.relationIndex.keyword = '';
+                    this.fire('gp-fund-investment-save', request.response.view);
+                    this.$.form.toggle();
+                }else {
+                    this.text = 'save fail!';
+                    this.$.toast.open();
+                }
+            },
+            edit: function(data) {
+                data.commitmentDateStr = moment(data.commitmentDate).format("YYYY-MM-DD");
+                this.getDictLabel(data);
+                for(var j in data.capitalCalls) {
+                    data.capitalCalls[j].dueDateStr = moment(data.capitalCalls[j].dueDate).format("YYYY-MM-DD");
+                    data.capitalCalls[j].callDateStr = moment(data.capitalCalls[j].callDate).format("YYYY-MM-DD");
+                    this.getDictLabel(data.capitalCalls[j]);
+                }
+                for(var j in data.distributions) {
+                    data.distributions[j].dateStr = moment(data.distributions[j].date).format("YYYY-MM-DD");
+                    this.getDictLabel(data.distributions[j]);
+                }
+                if(!data.capitalCalls) {
+                    data.capitalCalls = [];
+                }
+                if(!data.distributions) {
+                    data.distributions = [];
+                }
+                this.view = data;
+                this.$.relationIndex.keyword = data.gpFundName;
+            }
+        })
+    </script>
+</dom-module>

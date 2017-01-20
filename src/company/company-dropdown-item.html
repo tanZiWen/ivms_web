@@ -1,0 +1,25 @@
+<dom-module id='company-dropdown-item'>
+    <style is='custom-style' include='shared-styles'></style>
+    <template>
+        <div class="row dp-item-row-2 pointer-cursor" on-tap="_selectCompany">
+            <div class="row">
+               <div class="col-md-12 text-center" style="font-weight: bold;">
+                  <span>[[company.name]]</span>
+               </div>
+            </div>
+            <div class="row">
+               <div class="col-md-12 text-muted text-center">
+                   <span>[[company.alias]]</span>
+               </div>
+           </div>
+        </div>
+    </template>
+    <script>
+        Polymer({
+            is: 'company-dropdown-item',
+            _selectCompany: function() {
+                this.fire('select-company', this.company);
+            }
+        });
+    </script>
+</dom-module>

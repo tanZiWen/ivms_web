@@ -1,0 +1,20 @@
+<dom-module id="fof-dropdown-item">
+    <template>
+        <style is='custom-style' include='shared-styles'></style>
+        <div class="row dp-item-row-2 pointer-cursor" on-tap="_selectFof">
+            <div class="row">
+               <div class="col-md-12 text-center" style="font-weight: bold;">
+                  <span>[[fof.name]]</span>
+               </div>
+            </div>
+        </div>
+    </template>
+    <script>
+        Polymer({
+            is: 'fof-dropdown-item',
+            _selectFof: function() {
+                this.fire('select-fof', this.fof);
+            }
+        });
+    </script>
+</dom-module>

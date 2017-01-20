@@ -1,0 +1,214 @@
+<script>
+    window.MyBehaviors = window.MyBehaviors || {};
+    MyBehaviors.ConfigBehavior = {
+        properties: {
+            delToastFailText: {
+                type: String,
+                value: 'Delete Fail!'
+            },
+            saveToastFailText: {
+                type: String,
+                value: 'Save Fail!'
+            },
+            delOwnershipName: {
+                type: String,
+                value: 'ownership',
+                readOnly: true
+            },
+            views: {
+                type: Array,
+                notify: true,
+                value: []
+            },
+            isEmptyViews: {
+                type: Boolean,
+                notify: true,
+                value: true
+            },
+            delIndex: {
+                type: Number,
+                value: ''
+            },
+            delName: {
+                type: String,
+                value: ''
+            }
+        },
+        contains : function(key, arrayObj) {
+            if(!arrayObj) {
+                return false;
+            } else {
+                for(var i in arrayObj) {
+                    if(arrayObj[i] == key) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        },
+        _onOwnershipSave: function(data, isRequest) {
+            this.$.ownershipStructure.shadowRoot.querySelector('paper-dialog').toggle();
+            this.onCommonInnerModuleSave(data, 'ownershipStructures', isRequest);
+        },
+        onCommonInnerModuleSave: function(data, module, isRequest) {
+            var viewModule = 'view.'+ module;
+            if(this.view[module] == null) {
+                this.set(viewModule, []);
+            }
+            if(!_.isEmpty(data)) {
+                var index = 0;
+                var modules = this.view[module];
+                if(!data.code) {
+                    if(modules.length > 0) {
+                        for(var i in modules) {
+                            if(modules[i].code > index) {
+                                index = modules[i].code;
+                            }
+                        }
+                    }
+                    index++;
+                    data.code = index;
+                }else {
+                    for(var i in modules) {
+                        if(modules[i].code == data.code) {
+                            this.splice(viewModule, i, 1);
+                        }
+                    }
+                }
+                this.getDictLabel(data);
+                this.async(function() {
+                    this.unshift(viewModule, data);
+                    if(isRequest) {
+                        this.$.reqSave.body = JSON.stringify(this.view);
+                        this.$.reqSave.generateRequest();
+                    }
+                });
+
+            }
+        },
+        _editOwnership: function(e, data) {
+            var ownership = e.model.item;
+            this.title = "Edit";
+            this.addName = 'ownershipStructure';
+            this.$.ownershipStructure.edit(ownership);
+            this.$.ownershipStructure.shadowRoot.querySelector('paper-dialog').toggle();
+        },
+        _onSaveResponse: function(e, request) {
+            if(request.response.code == 200 || request.response.code == null) {
+              if(this.view.id) {
+                  this.fire('save', this.view);
+              }else {
+                  this.fire('save');
+                  this.view = {};
+              }
+              this.$.form.toggle();
+            }else {
+                this.text = 'save fail!';
+                this.$.toast.open();
+            }
+        },
+        _delOwnership: function(e) {
+            this.$.deleteDlg.shadowRoot.querySelector('paper-dialog').toggle();
+            this.delItem = e.model.item;
+            this.delName = this.delOwnershipName;
+            this.addName = '';
+            this.delIndex = e.model.vIndex;
+        },
+        _onDeleteItem: function(e, data) {
+            if(this.delName) {
+                if(this.delName == this.delOwnershipName) {
+                    this.splice('view.ownershipStructures', this.delIndex, 1);
+                }else if(this.delName == 'delCapitalCall') {
+                    this.splice('view.capitalCalls', this.delIndex, 1);
+                }else if(this.delName == 'delDistribution') {
+                    this.splice('view.distributions', this.delIndex, 1);
+                }else if(this.delName == 'ipo') {
+                    this.splice('view.ipos', this.delIndex, 1);
+                }else if(this.delName == 'financial') {
+                    this.splice('view.financials', this.delIndex, 1);
+                }else if(this.delName == 'financingRound') {
+                    this.splice('view.financingRounds', this.delIndex, 1);
+                }else if(this.delName == 'comps') {
+                    this.splice('view.compIds', this.delIndex, 1);
+                }else if(this.delName == 'gpFundValuation') {
+                    this.splice('view.valuations', this.delIndex, 1);
+                }else if(this.delName == 'gpFundInvestmentValuation') {
+                    this.splice('view.valuations', this.delIndex, 1);
+                    this.$.deleteDlg.shadowRoot.querySelector('paper-dialog').toggle();
+                    return;
+                }else if(this.delName == 'gpFundInvestment' || this.delName == 'companyInvestment' || this.delName == 'fof' || this.delName == 'gpFund' || this.delName == 'person') {
+                    this.$.reqDel.generateRequest();
+                    return;
+                }
+                this.$.reqSave.body = JSON.stringify(this.view);
+                this.$.reqSave.generateRequest();
+            }else {
+                this.$.reqDel.generateRequest();
+            }
+        },
+        _gotoPage: function(e, page) {
+            this.pager.page = page;
+            this.refresh();
+        },
+        _onDelResponse: function(e, request) {
+            if(request.response.code == 200 || request.response.code == null) {
+                this.$.deleteDlg.shadowRoot.querySelector('paper-dialog').toggle();
+                if(this.delName) {
+                    this.$.reqList.generateRequest();
+                }else {
+                    this.refresh();
+                }
+            }else {
+                this.text = this.delToastFailText;
+                this.$.toast.open();
+            }
+        },
+        getDictLabel: function(data) {
+            if(this.dictionary && data) {
+                if(data.geographyCode && this.dictionary.geography[data.geographyCode]) {
+                    data.geography = this.dictionary.geography[data.geographyCode].label;
+                }
+                if(data.relation && data.relation.type && this.dictionary.rel_type[data.relation.type]) {
+                    data.relationTypeLabel = this.dictionary.rel_type[data.relation.type].label;
+                }
+                if(data.corpType && this.dictionary.corp_type[data.corpType]) {
+                    data.corpTypeName = this.dictionary.corp_type[data.corpType].label;
+                }
+                if(data.industryGroupCodes) {
+                    for(var i in data.industryGroupCodes) {
+                        if(i == 0) {
+                            data.industryGroups = this.dictionary.industry_group[data.industryGroupCodes[i]].label;
+                        }else {
+                            data.industryGroups += ',' + this.dictionary.industry_group[data.industryGroupCodes[i]].label;
+                        }
+                    }
+                }
+                if(data.industryCode) {
+                    data.industry = this.dictionary.industry_group[data.industryCode].label;
+                }
+                if(data.currencyCode) {
+                    data.currency = this.dictionary.currency[data.currencyCode].label;
+                }
+                if(data.assetClassCode) {
+                    data.assetClass = this.dictionary.asset_class[data.assetClassCode].label;
+                }
+                if(data.callForCode) {
+                    data.callFor = this.dictionary.call_for[data.callForCode].label;
+                }
+                if(data.exchangeCode) {
+                    data.exchange = this.dictionary.exchange[data.exchangeCode].label;
+                }
+                if(data.ipoStatusCode) {
+                    data.ipoStatus = this.dictionary.ipo_status[data.ipoStatusCode].label;
+                }
+                if(data.fiscalYearCode) {
+                    data.fiscalYear = this.dictionary.fiscal_year[data.fiscalYearCode].label;
+                }
+            }
+        },
+        _showDelDialog: function(e) {
+            this.$.deleteDlg.shadowRoot.querySelector('paper-dialog').toggle();
+            this.delId = e.model.item.id;
+        }
+    }
+</script>

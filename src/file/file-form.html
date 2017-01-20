@@ -1,0 +1,284 @@
+<dom-module id="file-form">
+    <style is='custom-style' include='shared-styles'></style>
+    <template>
+
+        <iron-ajax id="reqGet"
+                   url="{{host}}/file/{{file.id}}"
+                   withCredentials=true
+                   contentType="application/json"
+                   on-response="{{ onGetResponse}}"
+                   handleAs="json">
+        </iron-ajax>
+        <paper-dialog id="form" style="width: 50%;" modal on-iron-overlay-opened="_loadData">
+            <paper-dialog-scrollable>
+            <h2>{{title}} File Information</h2>
+            <div class="vertical layout" id="fileFormDialogContainer">
+                <div class="row">
+                    <div class="col-md-6">
+                        <paper-input label="Title" type="text" value="{{ file.title }}"/>
+                    </div>
+                    <div class="col-md-6">
+                        <paper-input label="Attachment" type="file"/>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-6">
+                        <paper-dropdown-menu label="Select Source" style="min-width: 100px;" >
+                            <paper-listbox id="fileSource" class="dropdown-content" selected="{{file.source}}" on-iron-select="onSourceSelected">
+                                <template is="dom-repeat" items="{{dict.file_source.list}}">
+                                    <paper-item value="{{item.value}}" active="{{file.source == item.value}}">{{item.label}}</paper-item>
+                                </template>
+                            </paper-listbox>
+                        </paper-dropdown-menu>
+                    </div>
+                    <div class="col-sm-6">
+                        <paper-dropdown-menu label="Select Type" style="min-width: 100px;">
+                            <paper-listbox id="fileSourceType" class="dropdown-content" selected="{{file.type}}">
+                                <template is="dom-repeat" items="{{ fileTypeList }}">
+                                    <paper-item value="{{item.value}}" active="{{file.type == item.value}}">{{item.label}}</paper-item>
+                                </template>
+                            </paper-listbox>
+                        </paper-dropdown-menu>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12">
+                        <paper-textarea id="notesAutoGrow" label="Notes" rows="3" value="{{ file.notes }}" class='w100'></paper-textarea>
+                    </div>
+                </div>
+            </div>
+            </paper-dialog-scrollable>
+            <div class="row text-center m-t-20">
+                <paper-button raised dialog-dismiss>Cancel</paper-button>
+                <paper-button raised dialog-confirm class="custom green">Accept</paper-button>
+            </div>
+        </paper-dialog>
+        <iron-signals on-iron-signal-dictionary="_onDictionaryChanged"></iron-signals>
+    </template>
+    <script>
+        Polymer({
+            is: 'file-form',
+            LOG_TAG : 'file-form>',
+            ready: function() {
+                this.initData();
+            },
+            properties: {
+                dict: {
+                    type: Object
+                }
+            },
+            _loadData:function() {
+
+            },
+            initData : function() {
+                this.file = {};
+                this.fileTypeDicts = [];
+                this.isShowRelatedForm = false;
+                this.editingRelated = {};
+                this.editingRelatedIndex = -1;
+                this.relations = [];
+                this.selectRelationType = '';
+                this.editingRelated = {};
+                this.ralationSearcherOpened = false;
+                this.isShowRelatedForm = false;
+                this.editMod = false;
+                this.editFileName = "";
+            },
+            _onDictionaryChanged: function(e, data) {
+                this.dict = data;
+            },
+            onSourceSelected : function(e) {
+                if (this.file.source) {
+                    this.fileTypeList = this.dict['file_source_type_' + this.file.source].list
+                }
+            },
+            onTypeSelected : function(e) {
+                this.file.type = e.target.value;
+            },
+            onSave : function(e) {
+                var content = this.$.content;
+                var $this = this;
+                var fileFormDialog = this.$.fileFormDialog;
+                if(this.doValid()) {
+                    this.$.submitSpinnerDiv.style.display = "";
+                    this.$.submitSpinner.active = true;
+                    this.$.submitButton.disabled = true;
+                    this.$.cancelButton.disabled = true;
+                    var formData = new FormData();
+                    var fileObj = content.fileObj;
+                    if(fileObj) {
+                        formData.append('file', fileObj, fileObj.name)
+                    }
+                    this.file.source = this.$.sourceSelector.value;
+                    this.file.type = this.$.typeSelector.value;
+                    formData.append('fileView', new Blob([JSON.stringify(this.file)], {type: "application/json"}));
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('POST', this.datasource.values.api + '/file', true);
+                    xhr.onload = function () {
+                        if (xhr.status === 200) {
+                            fileFormDialog.toggle();
+                            $this.fire('save', this.file);
+                        } else {
+                            content.inValid('File size exceeded. Maximum size is 100M');
+                        }
+                        $this.$.submitSpinnerDiv.style.display = "none";
+                        $this.$.submitSpinner.active = false;
+                        $this.$.submitButton.disabled = false;
+                        $this.$.cancelButton.disabled = false;
+                    };
+                    xhr.send(formData);
+                }
+            },
+            onFileChoose : function(e) {
+            },
+            onRelatedAdd : function(e) {
+                this.isShowRelatedForm = true;
+                this.editingRelated = {};
+                this.editingRelatedIndex = -1;
+                this.freshDialog();
+            },
+            onSearchRelation : function(e, keyword) {
+                this.$.reqRelation.method = 'GET';
+                if(keyword) {
+                    var params = {};
+                    params['type'] = this.editingRelated.type;
+                    params['keyword'] = keyword;
+                    this.$.reqRelation.params = JSON.stringify(params);
+                    this.$.reqRelation.go();
+                } else {
+                    this.relations = [];
+                    this.selectRelationType = "";
+                }
+
+            },
+            onSelectRelation : function(e, relation) {
+                this.editingRelated.name = relation.obj.name;
+                this.editingRelated.relId = relation.obj.id;
+                this.editingRelated.type = relation.type;
+            },
+            onReqRelationResponse : function(e, resp) {
+                var responseRelations = [];
+                if(resp.code == 200 || resp.code == null) {
+                    switch(resp.response.type) {
+                        case 1:
+                            responseRelations = resp.response.persons;
+                            break;
+                        case 2:
+                            responseRelations = resp.response.companies;
+                            break;
+                        case 3:
+                            responseRelations = resp.response.companies;
+                            break;
+                        case 4:
+                            responseRelations = resp.response.companies;
+                            break;
+                        case 5:
+                            responseRelations = resp.response.companies;
+                            break;
+                        case 6:
+                            responseRelations = resp.response.companies;
+                            break;
+                        case 7:
+                            responseRelations = resp.response.companies;
+                            break;
+                    }
+                    if(responseRelations && responseRelations.length > 0) {
+                        this.ralationSearcherOpened = true;
+                        this.selectRelationType = resp.response.type;
+                        this.relations = responseRelations;
+                    } else {
+                        this.relations = [];
+                        this.ralationSearcherOpened = false;
+                        this.selectRelationType = '';
+                    }
+                }
+            },
+            onRelatedCancel : function(e) {
+                this.isShowRelatedForm = false;
+                this.ralationSearcherOpened = false;
+                this.editingRelated = {};
+                this.editingRelatedIndex = -1;
+            },
+            onRelatedSave : function(e) {
+                if(!this.file.relateds) {
+                    this.file.relateds = [];
+                }
+                if(!this.editingRelated) {
+                    return;
+                }
+                if(!this.editingRelated.type || !this.editingRelated.name) {
+                    return;
+                }
+
+                var related = {
+                    type : this.editingRelated.type,
+                    name : this.editingRelated.name,
+                    relId : this.editingRelated.relId
+                };
+
+                if(this.editingRelatedIndex < 0) {
+                    this.file.relateds.unshift(related);
+                } else {
+                    this.file.relateds[this.editingRelatedIndex] = related;
+                }
+
+                this.editingRelated = {};
+                this.editingRelatedIndex = -1;
+            },
+            onRelatedEdit : function(e) {
+                var related = e.target.templateInstance.model.related;
+                this.editingRelated.type = related.type;
+                this.editingRelated.relId = related.relId;
+                this.editingRelated.name = related.name;
+                this.editingRelatedIndex = e.target.templateInstance.model.relatedIndex;
+            },
+            onRelatedRemove : function(e) {
+                var index = e.target.templateInstance.model.relatedIndex;
+                this.file.relateds.splice(index, 1);
+            },
+            doValid : function() {
+                var valid = true;
+                var titleDecorator = this.$.titleDecorator;
+                var content = this.$.content
+                if(!this.file.title) {
+                    titleDecorator.isInvalid = true;
+                    valid = false;
+                } else {
+                    titleDecorator.isInvalid = false;
+                }
+                if(!this.editMod) {
+                    if(!content.doValid()) {
+                        valid = false;
+                    }
+                }
+                return valid;
+            },
+            freshDialog : function() {
+                window.dispatchEvent(new Event('resize'));
+            },
+            onGetResponse : function(e, response) {
+                if(response.code == 200 || response.code == null) {
+                    Polymer.mixin(this.file, response.response.file);
+                    this.fillTypeSelector(this.file.source);
+                    this.editFileName = this.file.fileName;
+                    this.$.titleDecorator.updateLabelVisibility(this.file.title);
+                    this.$.notesDecorator.updateLabelVisibility(this.file.notes);
+                    this.$.fileFormDialog.toggle();
+                } else {
+                    this.fire('core-signal', {name: 'toast', data: { type: 'warning', message: 'get file failed'}});
+                }
+            },
+            onAttachmentDownload : function(e, detail, sender) {
+                window.open(this.datasource.values.api + '/file/' + this.file.id + '/attachment');
+            },
+            onFileSelected : function(e, fileName) {
+                var endIndex = fileName.lastIndexOf('.');
+                if(endIndex && endIndex > 0) {
+                    this.file.title = fileName.substr(0, endIndex);
+                } else {
+                    this.file.title = fileName;
+                }
+            }
+        });
+    </script>
+</dom-module>

@@ -1,0 +1,151 @@
+<dom-module id="person-edit">
+    <style is='custom-style' include='shared-styles'></style>
+    <template>
+        <iron-ajax id='reqList'
+                   url='[[host]]/person/[[editId]]'
+                   method='GET'
+                   with-credentials
+                   handle-as='json'
+                   on-response='_onListResponse'
+                   last-error="onRequestError"
+                   debounce-duration='5000'></iron-ajax>
+
+        <iron-localstorage name="dictionary" value="{{dictionary}}"></iron-localstorage>
+        <div class="row mc">
+            <div class="row pan fill-wd ct-l">
+                <div class="row text-right">
+                    <div class="col-md-12">
+                        <paper-icon-button icon="launch" class="pull-right" style="color: #428bca;" on-tap="_showEditDlg"></paper-icon-button>
+                    </div>
+                </div>
+                <person-form id="form" on-save="_onEditSave"></person-form>
+                <div class="row text-center">
+                    <h4>Person Basic Information</h4>
+                </div>
+                <div class="row text-center" >
+                    <div class="col-md-2 text-muted text-small  text-right">name:</div>
+                    <template is="dom-if" if="[[view.name]]">
+                        <div class="col-md-10 text-left">[[ view.name ]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.name]]">
+                        <div class="col-md-10 text-left">N/A</div>
+                    </template>
+                </div>
+                <div class="row text-center m-t-20">
+                    <div class="col-md-2 text-muted text-small  text-right">English Name:</div>
+                    <template is="dom-if" if="[[view.enname]]">
+                        <div class="col-md-10 text-left">[[ view.enname ]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.enname]]">
+                        <div class="col-md-10 text-left">N/A</div>
+                    </template>
+                </div>
+                <div class="row text-center m-t-20">
+                    <div class="col-md-2 text-muted text-small  text-right">Tel:</div>
+                    <template is="dom-if" if="[[view.tel]]">
+                        <div class="col-md-10 text-left">[[ view.tel ]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.tel]]">
+                        <div class="col-md-10 text-left">N/A</div>
+                    </template>
+                </div>
+                <div class="row text-center m-t-20">
+                    <div class="col-md-2 text-muted text-small  text-right">Email:</div>
+                    <template is="dom-if" if="[[view.email]]">
+                        <div class="col-md-10 text-left">[[ view.email ]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.email]]">
+                        <div class="col-md-10 text-left">N/A</div>
+                    </template>
+                </div>
+                <div class="row text-center m-t-20">
+                    <div class="col-md-2 text-muted text-small  text-right">Education Backgroup:</div>
+                    <template is="dom-if" if="[[view.edu]]">
+                        <div class="col-md-10 text-left">[[ view.edu ]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.edu]]">
+                        <div class="col-md-10 text-left">N/A</div>
+                    </template>
+                </div>
+                <div class="row text-center m-t-20">
+                    <div class="col-md-2 text-muted text-small text-right">Notes:</div>
+                    <template is="dom-if" if="[[view.notes]]">
+                        <div class="col-md-10 text-left">[[ view.notes ]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.notes]]">
+                        <div class="col-md-10 text-left">N/A</div>
+                    </template>
+                </div>
+                <div class="row text-center m-t-20">
+                    <h4>Work Experiences</h4>
+                </div>
+                <div class="row text-center">
+                    <div class="col-md-12 text-center">
+                        <table class="table pan">
+                            <thead>
+                                <tr class="th-inverse-success">
+                                    <th style="width: 15%" class="text-center">Join Date</th>
+                                    <th style="width: 15%" class="text-center">Leave Date</th>
+                                    <th style="width: 20%" class="text-center">Corporation Name</th>
+                                    <th style="width: 20%" class="text-center">Corporation Type</th>
+                                    <th style="width: 15%" class="text-center">Primary</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template is='dom-repeat' items="{{ view.workExperienceViews }}" >
+                                    <tr class="text-center">
+                                        <td>{{ item.joinDateStr }}</td>
+                                        <td>{{ item.leaveDateStr }}</td>
+                                        <td>{{ item.corpName }}</td>
+                                        <td>{{ item.corpTypeName }}</td>
+                                        <template is="dom-if" if="{{item.primary}}">
+                                            <td>Yes</td>
+                                        </template>
+                                        <template is="dom-if" if="{{!item.primary}}">
+                                            <td>No</td>
+                                        </template>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+           </div>
+        </div>
+    </template>
+    <script>
+        Polymer({
+            is: 'person-edit',
+            view: {
+                type: Object,
+                value: function() {
+                    return {}
+                }
+            },
+            behaviors: [
+                MyBehaviors.GlobalVariableBehavior,
+                MyBehaviors.ConfigBehavior,
+                MyBehaviors.EditBehavior
+            ],
+            _onListResponse: function(e, request) {
+                if(request.response.code == 200 || request.response.code == null) {
+                    var view = request.response.person;
+                    for (var i in view.workExperienceViews) {
+                        this.getDictLabel(view.workExperienceViews[i]);
+                    }
+                    this.view = view;
+                }else {
+                    this.text = 'get fail!';
+                    this.$.toast.open();
+                }
+            },
+            _onEditSave: function(e, data) {
+                this.set('view', {});
+                this.getDictLabel(data);
+                this.async(function() {
+                    this.set('view', data);
+                });
+            }
+        });
+    </script>
+</dom-module>

@@ -1,0 +1,49 @@
+<dom-module id="fof-edit-main">
+    <template>
+        <style is='custom-style' include='shared-styles'>
+            :host {
+                @apply(--layout-vertical)
+            }
+            paper-item.iron-selected {
+                background-color: #adacae;
+                color: #428bca;
+            }
+        </style>
+        <app-route route="[[route]]" pattern="/:edit_id" data="{{routeData}}"></app-route>
+        <div class="flex layout horizontal">
+            <div class="flex-10 layout vertical">
+                <paper-material elevation="3" class="flex">
+                    <neon-animated-pages selected="[[ page ]]" attr-for-selected="name">
+                        <fof-edit name="fof" edit-id="[[ routeData.edit_id ]]"></fof-edit>
+                        <meeting-list name="meeting" showSelectionRelation="false"></meeting-list>
+                        <news-list name="news" showSelectionRelation="false"></news-list>
+                        <file-list name="file" showSelectionRelation="false"></file-list>
+                    </neon-animated-pages>
+                </paper-material>
+            </div>
+            <div class="flex-2 layout vertical">
+                <paper-menu style="background-color:#eee; cursor: pointer" selected="{{ page }}" attr-for-selected="name">
+                    <paper-item name="fof"><paper-icon-button icon="settings"></paper-icon-button>FOF</paper-item>
+                    <paper-item name="meeting"><paper-icon-button icon="settings"></paper-icon-button>FOF Meeting</paper-item>
+                    <paper-item name="news"><paper-icon-button icon="settings"></paper-icon-button>FOF News</paper-item>
+                    <paper-item name="file"><paper-icon-button icon="settings"></paper-icon-button>FOF File</paper-item>
+                </paper-menu>
+            </div>
+        </div>
+        <a href="/fof">
+            <paper-fab icon="close" class="fab-b-r fab-cancel"></paper-fab>
+        </a>
+    </template>
+    <script>
+        Polymer({
+            is: 'fof-edit-main',
+            properties: {
+                page: {
+                    type: String,
+                    value: 'fof'
+                },
+                route: Object
+            }
+        });
+    </script>
+</dom-module>

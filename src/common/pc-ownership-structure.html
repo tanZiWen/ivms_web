@@ -1,0 +1,95 @@
+<dom-module id="pc-ownership-structure">
+    <style is='custom-style' include='shared-styles'></style>
+    <template>
+        <iron-localstorage name="dictionary" value="{{ dictionary }}"></iron-localstorage>
+        <paper-dialog id="form" style="width: 50%;" modal>
+            <div class="row vertical layout">
+                <h2>{{title}} Ownership Structure Information</h2>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <relation-index id="relationIndex" relation-type="[[stockholderType]]"
+                                        on-select="_onSelect"></relation-index>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <paper-dropdown-menu label="Select Currency" vertical-align="bottom" horizontal-align="left"
+                                             class="fill-wd">
+                            <paper-listbox class="dropdown-content" selected="{{ ownershipStructure.currencyCode }}"
+                                           attr-for-selected="value" style="width:18em;">
+                                <paper-item value=""></paper-item>
+                                <template is="dom-repeat" items="{{ dictionary.currency.list}}">
+                                    <paper-item value="{{ item.value }}">{{ item.label }}</paper-item>
+                                </template>
+                            </paper-listbox>
+                        </paper-dropdown-menu>
+                    </div>
+                    <div class="col-md-6">
+                        <paper-input label="Investment Amount(Mn)" type="text"
+                                     value="{{ ownershipStructure.investmentAmount }}"></paper-input>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <paper-input label="Ownership" type="text"
+                                     value="{{ ownershipStructure.ownership }}"></paper-input>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <paper-textarea label="Notes" value="{{ ownershipStructure.notes }}" rows="3"></paper-textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="row text-center m-t-20">
+                <paper-button raised dialog-dismiss on-tap="_onCancel">Cancel</paper-button>
+                <paper-button raised class="custom green" on-tap="_onSave">Accept</paper-button>
+            </div>
+        </paper-dialog>
+    </template>
+    <script>
+        Polymer({
+            is: 'pc-ownership-structure',
+            properties: {
+                ownershipStructure: {
+                    type: Object,
+                    value: function () {
+                        return {};
+                    }
+                },
+                relation: {
+                    type: Object,
+                    value: function () {
+                        return {};
+                    }
+                }
+            },
+            _onSave: function () {
+                if(this.relation.type != null && this.relation.name != null) {
+                    this.fire('ownership-save', this.ownershipStructure);
+                    this.reset();
+                }
+            },
+            _onCancel: function () {
+                this.reset();
+            },
+            _onSelect: function (e, data) {
+                this.relation.type = data.type;
+                this.relation.name = data.relation.name;
+                this.ownershipStructure.relation = this.relation;
+            },
+            edit: function (ownershipStructure) {
+                this.ownershipStructure = ownershipStructure;
+                this.$.relationIndex.type = ownershipStructure.relation.type;
+                this.$.relationIndex.shadowRoot.querySelector('#relationTypeForm').type = ownershipStructure.relation.type;
+                this.$.relationIndex.keyword = ownershipStructure.relation.name;
+            },
+            reset: function () {
+                this.$.relationIndex.shadowRoot.querySelector('#relationTypeForm').type = 0;
+                this.$.relationIndex.keyword = '';
+                this.ownershipStructure = {};
+            }
+        });
+    </script>
+</dom-module>

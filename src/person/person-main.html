@@ -1,0 +1,141 @@
+<link rel="import" href="./person-form.html">
+<dom-module id="person-main">
+    <style is='custom-style' include='shared-styles'>
+    </style>
+    <template>
+      <iron-ajax id='reqList'
+                 url='{{ host }}/person'
+                 method='GET'
+                 with-credentials
+                 handle-as='json'
+                 on-response='_onListResponse'
+                 last-error="_onRequestError"
+                 debounce-duration='5000'></iron-ajax>
+
+      <iron-ajax id='reqDel'
+                url='{{host}}/person/{{ delId }}'
+                method='DELETE'
+                with-credentials
+                handle-as='json'
+                on-response='_onDelResponse'
+                on-error="_onRequestError"
+                debounce-duration='5000'></iron-ajax>
+
+     <iron-localstorage name="dictionary" value="{{ dictionary }}"></iron-localstorage>
+     <div id="main" class="fill mc">
+         <div class="pan fill-wd ct-m">
+           <div class="row col-md-offset-2">
+             <div class="col-md-6">
+                 <paper-input label="Input Person Name" type="text" value="{{filter}}"></paper-input>
+             </div>
+             <div class="col-ms-2">
+                 <paper-button raised class="m-v-m" style="display: inline-block;float: left; margin-left: 30px;" on-tap="gotoPage">
+                     <span>Search</span>
+                 </paper-button>
+             </div>
+           </div>
+         </div>
+         <div class="fill-wd ct-l m-t-30">
+             <template is="dom-repeat" items="{{ views }}">
+                 <div class="fill-wd layout vertical card">
+                     <div class="hsr">
+                         <div class="flex-6">
+                            <a class="link-nu" href="javascript: void(0);">{{ item.name }}</a>
+                         </div>
+                         <div class="flex-6 text-right text-muted">
+                            <span>{{ item.workExperiences.0.corpName }}</span>
+                         </div>
+                     </div>
+                     <div class="hsr">
+                         <div class="flex-11 text-muted">
+                             <span>最后修改：</span>
+                             <span>{{item.lut}}</span>
+                         </div>
+                         <div class="flex-1 text-center">
+                             <a href="/person_edit/{{ item.id }}">
+                                <paper-icon-button icon="create"></paper-icon-button>
+                             </a>
+                             <paper-icon-button icon="close" on-tap="_showDelDialog"></paper-icon-button>
+                         </div>
+                     </div>
+                 </div>
+             </template>
+             <template is="dom-if" if="{{ !isEmptyViews }}">
+               <div class="fill-wd m-t-20">
+                   <pc-pager pager="{{pager}}" on-page="gotoPage"></pc-pager>
+               </div>
+             </template>
+         </div>
+         <template is="dom-if" if="{{ isEmptyViews }}">
+           <div class="pan fill-wd ct-l m-t-30">
+               <div class="fill-wd">
+                   <h3 class="text-center text-danger m-t-20">No records found.</h3>
+               </div>
+           </div>
+         </template>
+      </div>
+      <paper-fab icon="add" class="fab-b-r fab-success" on-tap="_onTapAdd"></paper-fab>
+      <person-form id="form" title="{{ title }}" on-save="refresh"></person-form>
+      <pc-delete-item id="deleteDlg" on-delete-item="_onDeleteItem"></pc-delete-item>
+    </template>
+    <script>
+      Polymer({
+        is: 'person-main',
+        ready: function() {
+            this.refresh();
+        },
+        properties: {
+          filter: {
+              type: String,
+              value: ""
+          },
+          pager: {
+              type: Object, 
+              notify: true,
+              value: {
+                  page: 0
+              }
+          },
+          title: {
+              type: String,
+              notify: true,
+              value: ''
+          }
+        },
+        behaviors: [
+            MyBehaviors.RefreshBehavior,
+            MyBehaviors.ConfigBehavior,
+            MyBehaviors.GlobalVariableBehavior
+        ],
+        refresh: function() {
+            this.$.reqList.params = {name: this.filter, page: this.pager.page};
+            this.$.reqList.generateRequest();
+        },
+        gotoPage: function(e, data) {
+            this.pager.page = 0;
+            this.refresh();
+        },
+        _onListResponse: function(e, resquest) {
+            this.views = resquest.response.persons;
+            this.pager = resquest.response.pager;
+            if(this.views == null || this.views.length == 0) {
+                this.isEmptyViews = true;
+            }else {
+                this.isEmptyViews = false;
+            }
+            this.doneRefresh();
+        },
+        _onRequestError: function(e) {
+            this.fire('core-signal', {
+                name: 'toast',
+                data: {type: 'warning', message: 'Request failed.'}
+            });
+        },
+        _onTapAdd: function() {
+            this.title = "Add";
+            this.$.form.person = {};
+            this.$.form.shadowRoot.querySelector('paper-dialog').toggle();
+        }
+      });
+    </script>
+</dom-module>

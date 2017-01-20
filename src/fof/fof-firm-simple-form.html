@@ -1,0 +1,67 @@
+<dom-module id="fof-firm-simple-form">
+    <template>
+        <style is='custom-style' include='shared-styles'></style>
+        <iron-ajax id='reqSave'
+                   url='{{ host }}/fofFirm'
+                   with-credentials
+                   handle-as='json'
+                   method='POST'
+                   content-type="application/json"
+                   on-response='_onSaveResponse'
+                   last-error="_onRequestError"
+                   debounce-duration='5000'></iron-ajax>
+        <iron-localstorage name="dictionary" value="{{ dictionary }}"></iron-localstorage>
+        <div class="row text-left">
+            <div class="row">
+                <div class="col-md-12">
+                    <h2>Add Simple FOF Firm</h2>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                  <paper-input id="name" error-message="This field is required" label="Name" value="{{fofFirm.name}}" required></paper-input>
+                </div>
+                <div class="col-md-6">
+                    <paper-dropdown-menu label="Select Geography" vertical-align="bottom" horizontal-align="left" class="fill-wd">
+                        <paper-listbox class="dropdown-content" style="width:18em;" selected="{{fofFirm.geographyCode}}">
+                            <template is="dom-repeat" items="{{ dictionary.geography.list}}">
+                                <paper-item value="{{item.value}}">{{ item.label }}</paper-item>
+                            </template>
+                        </paper-listbox>
+                    </paper-dropdown-menu>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <paper-textarea label="Notes" value="{{ fofFirm.notes }}" rows=5></paper-textarea>
+                </div>
+            </div>
+        </div>
+    </template>
+    <script>
+        Polymer({
+            is: 'fof-firm-simple-form',
+            properties: {
+                fofFirm: {
+                    type: Object,
+                    value: function() {
+                        return {}
+                    }
+                }
+            },
+            behaviors: [
+                MyBehaviors.GlobalVariableBehavior
+            ],
+            save: function() {
+                if(!this.$.name.invalid) {
+                    this.$.reqSave.body = JSON.stringify(this.fofFirm);
+                    this.$.reqSave.generateRequest();
+                }
+            },
+            _onSaveResponse: function(e, resquest) {
+                var fofFirm = e.detail.response.fofFirm;
+                this.fire('saved', fofFirm);
+            }
+        });
+    </script>
+</dom-module>

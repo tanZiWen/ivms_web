@@ -1,0 +1,119 @@
+<dom-module id="company-financingRound-form">
+    <style is='custom-style' include='shared-styles'></style>
+    <template>
+        <iron-localstorage name="dictionary" value="{{ dictionary }}"></iron-localstorage>
+        <paper-dialog id="form" style="width: 70%;" modal>
+            <paper-dialog-scrollable>
+                <h2>{{title}} Finanacing Round</h2>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <paper-input label="Round Name" type="text" value="{{ financingRound.name }}"/>
+                    </div>
+                    <div class="col-md-6">
+                        <paper-input label="Investment Date: YYYY-MM-DD" type="date" value="{{ financingRound.investmentDateStr }}"
+                                     error="Bad date format. YYYY-MM-DD is OK"/>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <paper-dropdown-menu label="Select Currency" vertical-align="bottom" horizontal-align="left"
+                                             class="fill-wd">
+                            <paper-listbox class="dropdown-content" selected="{{ financingRound.currencyCode }}"
+                                           attr-for-selected="value">
+                                <paper-item value=""></paper-item>
+                                <template is="dom-repeat" items="{{ dictionary.currency.list}}">
+                                    <paper-item value="{{ item.value }}">{{ item.label }}</paper-item>
+                                </template>
+                            </paper-listbox>
+                        </paper-dropdown-menu>
+                    </div>
+                    <div class="col-md-6">
+                        <paper-input label="Total Round Size(Mn)" type="text" value="{{ financingRound.totalRoundSize }}"/>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <paper-input label="Pre Money Valuation(Mn)" type="text" value="{{ financingRound.preMoneyValuation }}"/>
+                    </div>
+                    <div class="col-md-6">
+                        <paper-input label="Post Money Valuation(Mn)" type="text" value="{{ financingRound.postMoneyValuation }}"/>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <paper-input label="Entry PE" type="text" value="{{ financingRound.entryPe }}"/>
+                    </div>
+                    <div class="col-md-6">
+                        <paper-input label="Entry PB" type="text" value="{{ financingRound.entryPb }}"/>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <paper-input label="Entry PS" type="text" value="{{ financingRound.entryPs }}"/>
+                    </div>
+                    <div class="col-md-6">
+                        <paper-input label="Entry EV/EBITDA" type="text" value="{{ financingRound.entryEvOrEbitda }}"/>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <paper-input label="As Of Date(Year)" type="text" value="{{ financingRound.asOfDate }}"/>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <paper-textarea label="Notes" value="{{ financingRound.notes }}" rows=5></paper-textarea>
+                    </div>
+                </div>
+                <div class="row text-center m-t-20">
+                    <paper-button raised dialog-dismiss on-tap="_onCancel">Cancel</paper-button>
+                    <paper-button raised dialog-confirm class="custom green" on-tap="_onSave">Accept</paper-button>
+                </div>
+            </paper-dialog-scrollable>
+        </paper-dialog>
+    </template>
+    <script>
+        Polymer({
+            is: 'company-financingRound-form',
+            properties: {
+                financingRound: {
+                    type: Object,
+                    value: function () {
+                        return {};
+                    }
+                },
+                handleTag: {
+                    type: String,
+                    value: ''
+                }
+            },
+            behaviors: [
+                MyBehaviors.ConfigBehavior
+            ],
+            _onSave: function () {
+                var invalid = true;
+                if (this.financingRound.investmentDateStr && !this.financingRound.investmentDateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                    var investmentDate = Polymer.dom(this.$.viewFormDialog).querySelector('#investmentDate');
+                    investmentDate.isInvalid = true;
+                    invalid = false;
+                }
+                if (!invalid) {
+                    return;
+                }
+                this.set('financingRound.investmentDate', new Date(this.financingRound.investmentDateStr));
+                this.fire('financing-save', this.financingRound);
+                this.reset();
+            },
+            _onCancel: function () {
+                this.reset();
+            },
+            reset: function () {
+                this.financingRound = {};
+            },
+            edit: function (financingRound) {
+                this.financingRound = financingRound;
+            }
+        });
+    </script>
+</dom-module>

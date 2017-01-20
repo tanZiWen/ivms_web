@@ -1,0 +1,20 @@
+<dom-module id="fof-firm-dropdown-item">
+    <template>
+        <style is='custom-style' include='shared-styles'></style>
+        <div class="row dp-item-row-2 pointer-cursor" on-tap="_selectFofFirm">
+            <div class="row">
+               <div class="col-md-12 text-center" style="font-weight: bold;">
+                  <span>[[fofFirm.name]]</span>
+               </div>
+            </div>
+        </div>
+    </template>
+    <script>
+        Polymer({
+            is: 'fof-firm-dropdown-item',
+            _selectFofFirm: function() {
+                this.fire('select-fof-firm', this.fofFirm);
+            }
+        });
+    </script>
+</dom-module>

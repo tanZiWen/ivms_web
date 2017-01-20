@@ -1,0 +1,28 @@
+<script>
+    window.MyBehaviors = window.MyBehaviors || {};
+    MyBehaviors.CapitalCallBehavior = {
+        _startAddFofCapitalCall: function() {
+            this.capitalCallTitle='Add';
+            this.delName = '';
+            this.addName = 'capitalCall';
+            this.$.fofCapitalCall.shadowRoot.querySelector('paper-dialog').toggle();
+        },
+        _onCapitalCallSave: function(e, data) {
+            this.onCommonInnerModuleSave(data, 'capitalCalls', true);
+        },
+        _editCapitalCall: function(e) {
+            var capitalCall = e.model.item;
+            this.capitalCallTitle = "Edit";
+            this.addName = 'capitalCall';
+            this.$.fofCapitalCall.edit(capitalCall);
+            this.$.fofCapitalCall.shadowRoot.querySelector('paper-dialog').toggle();
+        },
+        _delCapitalCall: function(e) {
+            this.$.deleteDlg.shadowRoot.querySelector('paper-dialog').toggle();
+            this.delItem = e.model.item;
+            this.delName = 'delCapitalCall';
+            this.addName = '';
+            this.delIndex = e.model.vIndex;
+        }
+    }
+</script>

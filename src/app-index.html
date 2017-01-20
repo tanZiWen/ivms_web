@@ -1,0 +1,31 @@
+<link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="/src/behaviors/util-behavior.html">
+<link rel="import" href="/src/behaviors/global-variable-behavior.html">
+<dom-module id="app-index">
+    <template>
+      <iron-pages selected="[[page]]" attr-for-selected="name">
+          <app-login name="login"></app-login>
+          <app-main name="main"></app-main>
+      </iron-pages>
+    </template>
+    <script>
+      Polymer({
+        is: 'app-index',
+        behaviors: [
+            MyBehaviors.GlobalVariableBehavior,
+            MyBehaviors.UtilBehavior
+        ],
+        ready: function() {
+            var token = this.getCookie(this.tokenName);
+            if(token) {
+              this.page = "main";
+              this.importHref(this.resolveUrl('/src/app-main.html'), null, null, true);
+            }else {
+              this.page = "login";
+              this.importHref(this.resolveUrl('/src/app-login.html'), null, null, true);
+            }
+        }
+      });
+    </script>
+</dom-module>

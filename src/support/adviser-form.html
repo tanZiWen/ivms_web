@@ -1,0 +1,62 @@
+<dom-module name="adviser-form">
+    <style is='custom-style' include='shared-styles'></style>
+    <template>
+        <paper-dialog id="form" style="width: 50%;">
+            <h2>{{title}} Adviser Information</h2>
+            <div class="vertical layout">
+                <div class="row">
+                    <div class="col-md-6">
+                        <paper-input label="Name" type="text" value="{{ v.name }}"/>
+                    </div>
+                    <div class="col-md-6">
+                        <paper-dropdown-menu label="Type" vertical-align="bottom" horizontal-align="left" class="fill-wd">
+                            <paper-listbox class="dropdown-content">
+                                <template is="dom-repeat" items="{{ dictionary.adviser_type.list}}">
+                                    <paper-item>{{ item.label }}</paper-item>
+                                </template>
+                            </paper-listbox>
+                        </paper-dropdown-menu>
+                    </div>
+                </div>
+                <div class="row" style="margin-top: 40px">
+                    <div class="col-md-12">
+                        <paper-textarea label="Notes" value="{{ v.notes }}"></paper-textarea>
+                    </div>
+                </div>
+                <div class="row text-center m-t-20">
+                    <paper-button raised dialog-dismiss>Cancel</paper-button>
+                    <paper-button raised dialog-confirm class="custom green">Accept</paper-button>
+                </div>
+            </div>
+        </paper-dialog>
+        <iron-signals on-iron-signal-dictionary="_onDictionaryChanged"></iron-signals>
+    </template>
+    <script>
+        Polymer({
+            is: 'adviser-form',
+            properties: {
+                title: {
+                    type: String,
+                    notify: true,
+                    value: ''
+                },
+                dictionary: {
+                    type: Object,
+                    notify: true,
+                    value: {}
+                },
+                type: {
+                    type: Number,
+                    value: 1
+                }
+            },
+            _onDictionaryChanged: function(e, data) {
+                this.dictionary = data;
+            },
+            behaviors: [
+                MyBehaviors.RefreshBehavior,
+                MyBehaviors.ConfigBehavior
+            ]
+        });
+    </script>
+</dom-module>

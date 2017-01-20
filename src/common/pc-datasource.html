@@ -1,0 +1,69 @@
+<dom-module id="pc-datasource">
+    <template>
+        <iron-ajax id="reqList"
+                url="{{host}}/dictionary"
+                method='GET'
+                with-credentials
+                on-response="onDictionaryResponse"
+                on-error="onReqError"
+                handle-as="json"></iron-ajax>
+        <iron-localstorage name="dictionary" value="{{ dictionary }}"></iron-localstorage>
+    </template>
+    <script>
+          Polymer({
+              is: 'pc-datasource',
+              behaviors: [
+                  MyBehaviors.GlobalVariableBehavior,
+                  MyBehaviors.UtilBehavior
+              ],
+              requestDict: function() {
+                  if(!this.dictionary) {
+                      this.$.reqList.generateRequest();
+                  }
+              },
+              onDictionaryResponse: function(e, request) {
+                  if(request.status == 200) {
+                    var dictionaries = request.response.dictionaries;
+                    var stokeholderTypes = {'rel_fofFirm_type': [1, 6, 7], 'rel_fof_type': [3, 6], 'rel_gpFirm_type': [1, 7], 'rel_gpFund_type': [1, 2, 3, 5, 6, 7],
+                                            'work_experience_type': [3, 5, 7], 'fof_invest_type': [4, 7], 'rel_company_type': [1, 2, 3, 4, 5, 6, 7]};
+                    if(dictionaries != null) {
+                        var type = null;
+                        var dictionary = {};
+
+                        for (var i = 0; i < dictionaries.length; i++) {
+                            var dict = dictionaries[i];
+
+                            if (dict.type != type && dict.type != null) {
+                                type = dict.type;
+
+                                if (dictionary[type] == null) {
+                                    dictionary[type] = {'list': []};
+                                }
+                            }
+                            if(dict.type == 'rel_type') {
+                                for(var j in stokeholderTypes) {
+                                   if(dictionary[j] == null) {
+                                      dictionary[j] = {'list': []};
+                                   }
+                                   if(_.contains(stokeholderTypes[j], dict.value)) {
+                                      dictionary[j][dict.value] = dict;
+                                      dictionary[j].list.push(dict);
+                                   }
+                                }
+                            }
+                            dictionary[dict.type][dict.value] = dict;
+                            dictionary[dict.type].list.push(dict);
+                        }
+                        this.dictionary = dictionary;
+                    }
+                  }
+              },
+              onReqError: function() {
+                  this.fire('iron-signal', {
+                      name: 'toast',
+                      data: {type: 'warning', message: 'Request failed.'}
+                  });
+              }
+          });
+    </script>
+</dom-module>

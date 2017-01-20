@@ -1,0 +1,28 @@
+<script>
+    window.MyBehaviors = window.MyBehaviors || {};
+    MyBehaviors.DistributionBehavior = {
+        _startAddDistribution: function() {
+            this.distributionTitle='Add';
+            this.delName = '';
+            this.addName = 'distribution';
+            this.$.fofDistribution.shadowRoot.querySelector('paper-dialog').toggle();
+        },
+        _onDistributionSave: function(e, data) {
+            this.onCommonInnerModuleSave(data, 'distributions', true);
+        },
+        _editDistribution: function(e) {
+            var distribution = e.model.item;
+            this.distributionTitle = "Edit";
+            this.addName = 'distribution';
+            this.$.fofDistribution.edit(distribution);
+            this.$.fofDistribution.shadowRoot.querySelector('paper-dialog').toggle();
+        },
+        _delDistribution: function(e) {
+            this.$.deleteDlg.shadowRoot.querySelector('paper-dialog').toggle();
+            this.delItem = e.model.item;
+            this.delName = 'delDistribution';
+            this.addName = '';
+            this.delIndex = e.model.vIndex;
+        }
+    }
+</script>

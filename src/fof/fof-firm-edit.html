@@ -1,0 +1,372 @@
+<dom-module id="fof-firm-edit">
+    <template>
+        <style is='custom-style' include='shared-styles'></style>
+        <iron-ajax id='reqList'
+                   url='[[host]]/fofFirm/[[editId]]'
+                   method='GET'
+                   with-credentials
+                   handle-as='json'
+                   on-response='_onListResponse'
+                   last-error="onRequestError"
+                   debounce-duration='5000'></iron-ajax>
+
+        <iron-ajax id='reqDel'
+                   url='[[host]]/[[delName]]/[[delId]]'
+                   method='DELETE'
+                   with-credentials
+                   handle-as='json'
+                   on-response='_onDelResponse'
+                   on-error="_onRequestError"
+                   debounce-duration='5000'></iron-ajax>
+
+        <iron-ajax id='reqSave'
+                   url='{{ host }}/fofFirm'
+                   method="PUT"
+                   with-credentials
+                   handle-as='json'
+                   content-type="application/json"
+                   on-response='_onSaveResponse'
+                   last-error="_onRequestError"
+                   debounce-duration='5000'></iron-ajax>
+        <iron-localstorage name="dictionary" value="{{ dictionary }}"></iron-localstorage>
+        <div class="row mc">
+            <div class="row pan fill-wd ct-l">
+                <div class="row text-right">
+                    <div class="col-md-12">
+                        <paper-icon-button icon="launch" class="pull-right" style="color: #428bca;"
+                                           on-tap="_showEditDlg"></paper-icon-button>
+                    </div>
+                </div>
+                <fof-firm-form id="form" on-save="_onEditSave"></fof-firm-form>
+                <div class="row text-center">
+                    <h4>FOF Firm Basic Information</h4>
+                </div>
+                <div class="row">
+                    <div class="col-md-2 text-muted text-small text-right">Name:</div>
+                    <template is="dom-if" if="[[view.name]]">
+                        <div class="col-md-10 text-left">[[view.name]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.name]]">
+                        <div class="col-md-10 text-left">N/A</div>
+                    </template>
+                </div>
+                <div class="row text-center m-t-10">
+                    <div class="col-md-2 text-muted text-small text-right">Other Name:</div>
+                    <template is="dom-if" if="[[view.otherName]]">
+                        <div class="col-md-10 text-left">[[view.otherName]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.otherName]]">
+                        <div class="col-md-10 text-left">N/A</div>
+                    </template>
+                </div>
+                <div class="row m-t-10">
+                    <div class="col-md-2 text-muted text-small text-right">Geography:</div>
+                    <template is="dom-if" if="[[view.geography]]">
+                        <div class="col-md-10 text-left">[[view.geography]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.geography]]">
+                        <div class="col-md-10 text-left">N/A</div>
+                    </template>
+                </div>
+                <div class="row m-t-10">
+                    <div class="col-md-2 text-muted text-small text-right">Notes:</div>
+                    <template is="dom-if" if="[[view.notes]]">
+                        <div class="col-md-10 text-left">[[view.notes]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.notes]]">
+                        <div class="col-md-10 text-left">N/A</div>
+                    </template>
+                </div>
+                <div class="row text-center m-t-10">
+                    <h4>FOF Firm Registration Information</h4>
+                </div>
+                <div class="row text-center m-t-10">
+                    <div class="col-md-2 text-muted text-small text-right">Registration Amount(Mn):</div>
+                    <template is="dom-if" if="[[view.registrationAmount]]">
+                        <div class="col-md-4 text-left">[[view.currency]]  [[ view.registrationAmount ]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.registrationAmount]]">
+                        <div class="col-md-4 text-left">N/A</div>
+                    </template>
+                    <div class="col-md-2 text-muted text-small text-right">Registered Date:</div>
+                    <template is="dom-if" if="[[view.registeredDateStr]]">
+                        <div class="col-md-4 text-left">[[ view.registeredDateStr ]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.registeredDateStr]]">
+                        <div class="col-md-4 text-left">N/A</div>
+                    </template>
+                </div>
+                <div class="row text-center m-t-10">
+                    <div class="col-md-2 text-muted text-small text-right">Registered Address:</div>
+
+                    <template is="dom-if" if="[[view.registeredAddress]]">
+                        <div class="col-md-10 text-left">[[ view.registeredAddress ]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.registeredAddress]]">
+                        <div class="col-md-10 text-left">N/A</div>
+                    </template>
+                </div>
+                <div class="row text-center m-t-10">
+                    <h4>FOF Firm Record Information</h4>
+                </div>
+                <div class="row text-center m-t-10">
+                    <div class="col-md-2 text-muted text-small text-right">AMAC Record No. :</div>
+
+                    <template is="dom-if" if="[[view.amacRecordNo]]">
+                        <div class="col-md-10 text-left">[[ view.amacRecordNo ]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.amacRecordNo]]">
+                        <div class="col-md-10 text-left">N/A</div>
+                    </template>
+                </div>
+                <div class="row text-center m-t-10">
+                    <div class="col-md-2 text-muted text-small text-right">Record Date:</div>
+                    <template is="dom-if" if="[[view.recordedDateStr]]">
+                        <div class="col-md-10 text-left">[[ view.recordedDateStr ]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.recordedDateStr]]">
+                        <div class="col-md-10 text-left">N/A</div>
+                    </template>
+                </div>
+                <div class="row m-t-10">
+                    <div class="col-md-7 text-right">
+                        <h4>FOF Firm Ownership Structure</h4>
+                    </div>
+                    <div class="col-md-5 m-t-10">
+                        <div style="display: inline-block; float: right; margin-right: 10px;">
+                            <paper-fab mini icon="add" on-tap="_startAddOwnershipStructure"></paper-fab>
+                        </div>
+                    </div>
+                </div>
+                <pc-ownership-structure id="ownershipStructure" stockholder-type="rel_fofFirm_type"
+                                        title="[[ownershipTitle]]"
+                                        on-ownership-save="_onOwnershipSave"></pc-ownership-structure>
+                <div class="row m-t-20">
+                    <div class="col-md-12 text-center">
+                        <table class="table mm-box">
+                            <thead>
+                            <tr class="th-inverse-success">
+                                <th style="width: 15%" class="text-center">Type</th>
+                                <th style="width: 15%" class="text-center">Investor</th>
+                                <th style="width: 20%" class="text-center">Currency</th>
+                                <th style="width: 20%" class="text-center">Investment Amount(Mn)</th>
+                                <th style="width: 20%" class="text-center">Ownership</th>
+                                <th style="width: 5%">&nbsp;</th>
+                                <th style="width: 5%">&nbsp;</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <template is="dom-repeat" items="[[view.ownershipStructures]]" index-as="vIndex">
+                                <tr class="text-center">
+                                    <td>{{ item.relationTypeLabel }}</td>
+                                    <td>{{ item.relation.name }}</td>
+                                    <td>{{ item.currency }}</td>
+                                    <td>{{ item.investmentAmount }}</td>
+                                    <td>{{ item.ownership }}</td>
+                                    <td>
+                                        <paper-icon-button icon="create" on-click="_editOwnership"></paper-icon-button>
+                                    </td>
+                                    <td>
+                                        <paper-icon-button icon="close" on-click="_delOwnership"></paper-icon-button>
+                                    </td>
+                                </tr>
+                            </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="row m-t-10">
+                    <div class="col-md-6 text-right">
+                        <h4>FOF</h4>
+                    </div>
+                    <div class="col-md-6 m-t-10">
+                        <div style="display: inline-block; float: right; margin-right: 10px;">
+                            <paper-fab mini icon="add" on-tap="_startAddFOF"></paper-fab>
+                        </div>
+                    </div>
+                </div>
+                <fof-form id="fof" title="[[fofTitle]]" handle-tag="{{handleTag}}" on-save="_onSave"></fof-form>
+                <div class="row m-t-20">
+                    <div class="col-md-12 text-center">
+                        <table class="table mm-box">
+                            <thead>
+                            <tr class="th-inverse-success">
+                                <th style="width: 25%" class="text-center">Name</th>
+                                <th style="width: 15%" class="text-center">Currency</th>
+                                <th style="width: 20%" class="text-center">FundSize(Mn)</th>
+                                <th style="width: 20%" class="text-center">Vintage Year</th>
+                                <th style="width: 15%" class="text-center">Asset Class</th>
+                                <th style="width: 5%">&nbsp;</th>
+                                <th style="width: 5%">&nbsp;</th>
+                                <th style="width: 5%">&nbsp;</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <template is="dom-repeat" items="[[ fofList ]]">
+                                <tr class="text-center">
+                                    <td>{{ item.name }}</td>
+                                    <td>{{ item.currency }}</td>
+                                    <td>{{ item.fundSize }}</td>
+                                    <td>{{ item.vintageYear }}</td>
+                                    <td>{{ item.assetClass }}</td>
+                                    <td>
+                                        <paper-icon-button icon="create" on-click="_editFof"></paper-icon-button>
+                                    </td>
+                                    <td>
+                                        <paper-icon-button icon="close" on-click="_delFof"></paper-icon-button>
+                                    </td>
+                                    <a href="/fof_edit/{{item.id}}">
+                                        <paper-icon-button icon="laptop-windows"></paper-icon-button>
+                                    </a>
+                                </tr>
+                            </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="row text-center m-t-10">
+                    <div class="col-md-6 text-right">
+                        <h4>Person</h4>
+                    </div>
+                    <div class="col-md-6 m-t-10">
+                        <div style="display: inline-block; float: right; margin-right: 10px;">
+                            <paper-fab mini icon="add" on-tap="_startAddPerson"></paper-fab>
+                        </div>
+                    </div>
+                </div>
+                <person-form id="person" title="[[personTitle]]" handle-tag="[[handleTag]]" on-save="_onSave"></person-form>
+                <div class="row m-t-20">
+                    <div class="col-md-12 text-center">
+                        <table class="table mm-box">
+                            <thead>
+                            <tr class="th-inverse-success">
+                                <th style="width: 15%" class="text-center">Name</th>
+                                <th style="width: 15%" class="text-center">Tel</th>
+                                <th style="width: 20%" class="text-center">Email</th>
+                                <th style="width: 5%">&nbsp;</th>
+                                <th style="width: 5%">&nbsp;</th>
+                                <th style="width: 5%">&nbsp;</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <template is="dom-repeat" items="[[ personList ]]">
+                                <tr class="text-center">
+                                    <td>{{ item.name }}</td>
+                                    <td>{{ item.tel }}</td>
+                                    <td>{{ item.email }}</td>
+                                    <td>
+                                        <paper-icon-button icon="create" on-click="_editPerson"></paper-icon-button>
+                                    </td>
+                                    <td>
+                                        <paper-icon-button icon="close" on-click="_delPerson"></paper-icon-button>
+                                    </td>
+                                    <a href="/person_edit/{{item.id}}">
+                                        <paper-icon-button icon="laptop-windows"></paper-icon-button>
+                                    </a>
+                                </tr>
+                            </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <paper-toast id="toast" text="[[text]]"></paper-toast>
+        <pc-delete-item id="deleteDlg" on-delete-item="_onDeleteItem"></pc-delete-item>
+    </template>
+    <script>
+        Polymer({
+            is: 'fof-firm-edit',
+            properties: {
+                delFofId: {
+                    type: Number
+                }
+            },
+            behaviors: [
+                MyBehaviors.GlobalVariableBehavior,
+                MyBehaviors.EditBehavior,
+                MyBehaviors.CorpPersonBehavior,
+                MyBehaviors.ConfigBehavior
+            ],
+            _onListResponse: function (e, request) {
+                if (request.response.code == 200 || request.response.code == null) {
+                    var view = request.response.view;
+                    this.getDictLabel(view);
+                    if (view.ownershipStructures) {
+                        for (var i in view.ownershipStructures) {
+                            this.getDictLabel(view.ownershipStructures[i]);
+                        }
+                    }
+                    this.fofList = request.response.fofList;
+                    if (this.fofList) {
+                        for (var i in this.fofList) {
+                            this.getDictLabel(this.fofList[i]);
+                        }
+                    }
+                    this.personList = request.response.personList;
+                    if (view.registeredDate != null) {
+                        view.registeredDateStr = moment(view.registeredDate).format("YYYY-MM-DD");
+                    }
+                    if (view.recordDate != null) {
+                        view.recordedDateStr = moment(view.recordDate).format("YYYY-MM-DD");
+                    }
+                    this.view = view;
+                } else {
+                    this.text = 'get fail!';
+                    this.$.toast.open();
+                }
+            },
+            _onEditSave: function (e, data) {
+                this.set('view', {});
+                this.getDictLabel(data);
+                this.set('view', data);
+            },
+            _onOwnershipSave: function (e, data){
+                this.onCommonInnerModuleSave(data, 'ownershipStructures', true);
+            },
+            _onSaveResponse: function(e, request) {
+                if(request.response.code == 200 || request.response.code == null) {
+                    if(this.delName) {
+                        this.$.deleteDlg.shadowRoot.querySelector('paper-dialog').toggle();
+                    }
+                    if(this.addName == 'ownershipStructure') {
+                        this.$.ownershipStructure.shadowRoot.querySelector('paper-dialog').toggle();
+                    }
+                }else {
+                    this.text = 'save fail!';
+                    this.$.toast.open();
+                }
+            },
+            _startAddOwnershipStructure: function () {
+                this.ownershipTitle = 'Add';
+                this.delName = '';
+                this.addName = 'ownershipStructure';
+                this.$.ownershipStructure.shadowRoot.querySelector('paper-dialog').toggle();
+            },
+            _startAddFOF: function () {
+                this.fofTitle = "Add";
+                this.handleTag = "fofFirmAdd";
+                this.$.fof.view = {fofFirmId: this.view.id, fofFirmName: this.view.name, ownershipStructures: []};
+                this.$.fof.relationInputEnabled();
+                this.$.fof.shadowRoot.querySelector('paper-dialog').toggle();
+            },
+            _editFof: function (e) {
+                var fof = e.model.item;
+                this.handleTag = "fofFirmEdit"
+                fof.fofFirmName = this.view.name;
+                this.$.fof.view = fof;
+                this.fofTitle = "Edit";
+                this.$.fof.relationInputEnabled();
+                this.$.fof.shadowRoot.querySelector('paper-dialog').toggle();
+            },
+            _onSave: function () {
+                this.$.reqList.generateRequest();
+            },
+            _delFof: function (e) {
+                this.$.deleteDlg.shadowRoot.querySelector('paper-dialog').toggle();
+                this.delId = e.model.item.id;
+                this.delName = "fof";
+            }
+        });
+    </script>
+</dom-module>

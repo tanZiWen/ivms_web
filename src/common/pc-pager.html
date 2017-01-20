@@ -1,0 +1,112 @@
+<dom-module id="pc-pager">
+    <style is='custom-style' include='shared-styles'></style>
+    <template>
+        <template is="dom-if" if="{{ pager.count }}">
+            <ul class="pagination">
+                <li class$="{{ isDisabled(formattedPager.hasPrevious) }}"><a href="javascript:void(0);" data-page="{{ formattedPager.page - 1}}" on-tap="gotoPage">&laquo;</a></li>
+                <template is="dom-repeat" items="{{ formattedPager.pages }}">
+                    <li class$="{{ isActive(formattedPager.page, item) }}"><a href="javascript:void(0);" data-page="{{ item }}" on-tap="gotoPage">{{item}}</a></li>
+                </template>
+                <li class$="{{ isDisabled(formattedPager.hasNext)}}"><a href="javascript:void(0);" data-page="{{ formattedPager.page + 1}}" on-tap="gotoPage">&raquo;</a></li>
+            </ul>
+        </template>
+    </template>
+    <script>
+        Polymer({
+            is: 'pc-pager',
+            properties: {
+                formattedPager: {
+                    type: Object,
+                    notify: true,
+                    value: {}
+                },
+                pager: {
+                    type: Object,
+                    notify: true,
+                    observer: '_pagerChanged'
+                },
+                defaultPage: {
+                    type: Object,
+                    value: function() {
+                        return {size: 20, max: 10}
+                    }
+                }
+            },
+            isActive: function(v1, v2) {
+                if(v1 == v2) {
+                    return "active";
+                }else {
+                    return "";
+                }
+            },
+            isDisabled: function(v) {
+                if(!v) {
+                    return "disabled";
+                }else {
+                    return "";
+                }
+            },
+            behaviors: [
+                MyBehaviors.ConfigBehavior
+            ],
+            _pagerChanged: function (newVal, oldVal) {
+                if (newVal == null) {
+                    this.formattedPager = {};
+                } else {
+                    var formattedPager = {};
+                    var count = this.pager.count;
+                    var size = this.pager.size || this.defaultPage.size;
+                    var max = this.pager.max || this.defaultPage.max;
+                    var page = this.pager.page || 0;
+
+                    var totalPage = Math.ceil(count / size);
+                    formattedPager.hasPrevious = page > 1;
+                    formattedPager.hasNext = page < totalPage;
+                    formattedPager.total = totalPage;
+                    formattedPager.page = page;
+
+                    var pages = [];
+                    var left = 0;
+                    var right = 0;
+                    var roundHalf = Math.round((max + 1) / 2);
+                    if (totalPage <= max) {
+                        left = page - 1;
+                        right = totalPage - page;
+                    } else {
+                        if (page <= roundHalf) {
+                            left = page - 1;
+                            right = max - page;
+                        } else {
+                            if (totalPage - page <= roundHalf) {
+                                right = totalPage - page;
+                                left = max - right - 1;
+                            } else {
+                                left = roundHalf - 1;
+                                right = max - roundHalf;
+                            }
+                        }
+                    }
+
+                    for (var i = left; i >= 1; i--) {
+                        pages.push(page - i);
+                    }
+
+                    pages.push(page);
+
+                    for (var i = 1; i <= right; i++) {
+                        pages.push(page + i);
+                    }
+                    formattedPager.pages = pages;
+                    this.formattedPager = formattedPager;
+                }
+            },
+            gotoPage: function (e) {
+                var page = e.model.item;
+                if(page <= 0 || page > Math.ceil(this.pager.count / this.pager.size)) {
+                    return;
+                }
+                this.fire('page', parseInt(page));
+            }
+        });
+    </script>
+</dom-module>

@@ -1,0 +1,24 @@
+<script>
+    window.MyBehaviors = window.MyBehaviors || {};
+    MyBehaviors.UtilBehavior = {
+        parseMap: function(list, key) {
+            var result = {};
+            for(var i in list) {
+                result[list[i][key]] = list[i];
+            }
+            return result;
+        },
+        setCookie: function(name, value) {
+            document.cookie = name + '=' + escape(value);
+        },
+        getCookie: function(name) {
+            var pairs = document.cookie.split(/\s*;\s*/);
+            for(var i in pairs) {
+              var arr = pairs[i].split("=");
+              if(arr[0] == name) {
+                return unescape(arr[1]);
+              }
+            }
+        }
+    }
+</script>

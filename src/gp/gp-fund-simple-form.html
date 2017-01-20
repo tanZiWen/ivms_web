@@ -1,0 +1,76 @@
+<dom-module id="gp-fund-simple-form">
+    <style is='custom-style' include='shared-styles'></style>
+    <template>
+        <iron-ajax id='reqSave'
+                   url='{{ host }}/gpFund'
+                   with-credentials
+                   handle-as='json'
+                    method='POST'
+                   content-type="application/json"
+                   on-response='_onSaveResponse'
+                   last-error="_onRequestError"
+                   debounce-duration='5000'></iron-ajax>
+
+        <iron-localstorage name="dictionary" value="{{ dictionary }}"></iron-localstorage>
+        <div class="row text-left">
+            <div class="row">
+                <div class="col-md-12">
+                    <h2>Add Simple GP Fund</h2>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <paper-input id="name" value="{{gpFund.name}}" type="text" error-message="This field is required" label="Name" required></paper-input>
+                </div>
+                <div class="col-md-6">
+                    <paper-input type="text" label="Other Name" value="{{gpFund.alias}}"></paper-input>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <paper-dropdown-menu label="Select Geography" vertical-align="bottom" horizontal-align="left" class="fill-wd">
+                        <paper-listbox class="dropdown-content" style="width:18em;" selected="{{gpFund.geographyCode}}">
+                            <template is="dom-repeat" items="{{ dictionary.geography.list}}">
+                                <paper-item value="{{item.value}}">{{ item.label }}</paper-item>
+                            </template>
+                        </paper-listbox>
+                    </paper-dropdown-menu>
+                </div>
+                <div class="col-md-6">
+                    <paper-input type="text" value="{{gpFund.fundSize}}" label="Fund Size"></paper-input>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <paper-textarea label="Notes" value="{{ gpFund.notes }}" rows=5></paper-textarea>
+                </div>
+            </div>
+        </div>
+    </template>
+    <script>
+        Polymer({
+            is: 'gp-fund-simple-form',
+            properties: {
+                gpFund: {
+                    type: Object,
+                    value: function() {
+                        return {}
+                    }
+                }
+            },
+            behaviors: [
+                MyBehaviors.GlobalVariableBehavior
+            ],
+            save: function() {
+                if(!this.$.name.invalid) {
+                    this.$.reqSave.body = JSON.stringify(this.gpFund);
+                    this.$.reqSave.generateRequest();
+                }
+            },
+            _onSaveResponse: function(e, resquest) {
+                var gpFund = e.detail.response.gpFund;
+                this.fire('saved', gpFund);
+            }
+        });
+    </script>
+</dom-module>

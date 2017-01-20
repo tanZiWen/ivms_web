@@ -1,0 +1,18 @@
+<dom-module id="person-dropdown-item">
+    <style is='custom-style' include='shared-styles'></style>
+    <template>
+        <div class="row dp-item-row-2 pointer-cursor" on-tap="_selectPerson">
+            <div class="col-md-12 text-center" style="font-weight: bold;">
+                <span>[[person.name]]</span>
+            </div>
+        </div>
+    </template>
+    <script>
+        Polymer({
+            is: 'person-dropdown-item',
+            _selectPerson: function() {
+                this.fire('select-person', this.person);
+            }
+        });
+    </script>
+</dom-module>

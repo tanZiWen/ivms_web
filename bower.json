@@ -1,0 +1,18 @@
+{
+  "name": "app-drawer-template",
+  "authors": [
+    "The Polymer Authors"
+  ],
+  "private": true,
+  "dependencies": {
+    "app-elements": "PolymerElements/app-elements#^0.9.0",
+    "iron-elements": "PolymerElements/iron-elements#^v1.0.10",
+    "neon-elements": "PolymerElements/neon-elements#^1.0.0",
+    "paper-elements": "PolymerElements/paper-elements#^1.0.7",
+    "polymer": "polymer/polymer#^1.4.0",
+    "piglet-login-rabbit": "PigletsRepo/piglet-login-rabbit"
+  },
+  "devDependencies": {
+    "web-component-tester": "^4.0.0"
+  }
+}

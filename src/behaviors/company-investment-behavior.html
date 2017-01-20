@@ -1,0 +1,93 @@
+<script>
+    window.MyBehaviors = window.MyBehaviors || {};
+    MyBehaviors.CompanyInvestmentBehavior = {
+        _onSave: function() {
+            var invalid = true;
+            if(!this.view.investmentDate) {
+                this.view.investmentDateStr = '';
+            }
+            if (this.view.investmentDateStr && !this.view.investmentDateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                this.$.investmentDate.invalid = true;
+                invalid = false;
+            }
+            if (!invalid) {
+                return;
+            }
+            this.view.investmentDate = new Date(this.view.investmentDateStr)
+            this.$.reqSave.body = JSON.stringify(this.view);
+            this.$.reqSave.generateRequest();
+            this.reset();
+        },
+        _onSaveResponse: function(e, request) {
+            if(request.response.code == 200 || request.response.code == null) {
+                this.fire('company-investment-save', request.response.view);
+                this.$.form.toggle();
+            }else {
+                this.text = 'save fial!'
+                this.$.toast.open();
+            }
+        },
+        edit: function(data) {
+            data.investmentDateStr = moment(data.investmentDate).format("YYYY-MM-DD");
+            this.getDictLabel(data);
+
+            for(var j in data.capitalCalls) {
+                data.capitalCalls[j].dueDateStr = moment(data.capitalCalls[j].dueDate).format("YYYY-MM-DD");
+                data.capitalCalls[j].callDateStr = moment(data.capitalCalls[j].callDate).format("YYYY-MM-DD");
+                this.getDictLabel(data.capitalCalls[j]);
+            }
+            for(var j in data.distributions) {
+                data.distributions[j].dateStr = moment(data.distributions[j].date).format("YYYY-MM-DD");
+                this.getDictLabel(data.distributions[j]);
+            }
+            for(var j in data.valuations) {
+                data.valuations[j].valuationDateStr = moment(data.valuations[j].valuationDate).format("YYYY-MM-DD");
+                this.getDictLabel(data.valuations[j]);
+            }
+            if(!data.capitalCalls) {
+                data.capitalCalls = [];
+            }
+            if(!data.distributions) {
+                data.distributions = [];
+            }
+            if(!data.valuations) {
+                data.valuations = [];
+            }
+            this.$.companyInvestment.edit(data);
+            this.view = data;
+        },
+        _onSelectCompanyInvestment: function(e, data) {
+            _.extend(this.view, data);
+        },
+        _onCompanyInvestmentSave: function(e, data) {
+            var companyInvestments = this.view.companyInvestments;
+            for(var i in companyInvestments) {
+                if(companyInvestments[i].id == data.id) {
+                    this.splice('view.companyInvestments', i, 1);
+                }
+            }
+            this.getDictLabel(data);
+            data.investmentDateStr = moment(data.investmentDate).format("YYYY-MM-DD");
+            this.async(function() {
+                this.unshift('view.companyInvestments', data);
+            });
+        },
+        _editCompanyInvestment: function(e) {
+            var companyInvestment = e.model.item;
+            this.companyInvestmentFormTitle = "Edit";
+            this.$.companyInvestmentForm.edit(companyInvestment);
+            this.$.companyInvestmentForm.shadowRoot.querySelector('paper-dialog').toggle();
+        },
+        _delCompanyInvestment: function(e) {
+            this.$.deleteDlg.shadowRoot.querySelector('paper-dialog').toggle();
+            this.delId = e.model.item.id;
+            this.delName = 'companyInvestment';
+        },
+        _onCancel: function () {
+            this.reset();
+        },
+        reset: function () {
+            this.view = {};
+        }
+    }
+</script>

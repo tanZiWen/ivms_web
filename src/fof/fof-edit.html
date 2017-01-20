@@ -1,0 +1,569 @@
+<dom-module id="fof-edit">
+    <template>
+       <style is='custom-style' include='shared-styles'></style>
+        <iron-ajax id='reqList'
+                   url='[[host]]/fof/[[editId]]'
+                   method='GET'
+                   with-credentials
+                   handle-as='json'
+                   on-response='_onListResponse'
+                   last-error="onRequestError"
+                   debounce-duration='5000'></iron-ajax>
+
+       <iron-ajax id='reqSave'
+                  url='{{ host }}/fof'
+                  method='PUT'
+                  with-credentials
+                  handle-as='json'
+                  content-type="application/json"
+                  on-response='_onSaveResponse'
+                  last-error="_onRequestError"
+                  debounce-duration='5000'></iron-ajax>
+
+        <iron-ajax id='reqDel'
+                   url='[[host]]/[[delName]]/[[delId]]'
+                   method='DELETE'
+                   with-credentials
+                   handle-as='json'
+                   on-response='_onDelResponse'
+                   on-error="_onRequestError"
+                   debounce-duration='5000'></iron-ajax>
+
+        <iron-localstorage name="dictionary" value="{{ dictionary }}"></iron-localstorage>
+        <div class="row mc">
+            <div class="row pan fill-wd ct-l">
+                <div class="row text-right">
+                    <div class="col-md-12">
+                        <paper-icon-button icon="launch" class="pull-right" style="color: #428bca;"
+                                           on-tap="_showEditDlg"></paper-icon-button>
+                    </div>
+                </div>
+                <fof-form id="form" on-save="_onEditSave"></fof-form>
+                <div class="row text-center">
+                    <h4>FoF Basic Information</h4>
+                </div>
+                <div class="row">
+                    <div class="col-md-2 text-muted text-small text-right">FOF Name:</div>
+                    <template is="dom-if" if="[[view.name]]">
+                        <div class="col-md-10 text-left">[[ view.name ]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.name]]">
+                        <div class="col-md-10 text-left">N/A</div>
+                    </template>
+                </div>
+                <div class="row text-center m-t-10">
+                    <div class="col-md-2 text-muted text-small text-right">Other Name:</div>
+                    <template is="dom-if" if="[[view.alias]]">
+                        <div class="col-md-10 text-left">[[ view.alias ]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.alias]]">
+                        <div class="col-md-10 text-left">N/A</div>
+                    </template>
+                </div>
+                <div class="row text-center m-t-10">
+                    <div class="col-md-2 text-muted text-small text-right">FOF Firm:</div>
+                    <template is="dom-if" if="[[view.fofFirmName]]">
+                        <div class="col-md-10 text-left">[[ view.fofFirmName]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.fofFirmName]]">
+                        <div class="col-md-10 text-left">N/A</div>
+                    </template>
+                </div>
+                <div class="row text-center m-t-10">
+                    <div class="col-md-2 text-muted text-small text-right">Terms:</div>
+                    <template is="dom-if" if="[[view.terms]]">
+                        <div class="col-md-4 text-left">[[ view.terms ]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.terms]]">
+                        <div class="col-md-4 text-left">N/A</div>
+                    </template>
+                    <div class="col-md-2 text-muted text-small text-right">Investment Period:</div>
+                    <template is="dom-if" if="[[view.investmentPeriod]]">
+                        <div class="col-md-4 text-left">[[ view.investmentPeriod ]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.investmentPeriod]]">
+                        <div class="col-md-4 text-left">N/A</div>
+                    </template>
+                </div>
+                <div class="row text-center m-t-10">
+                    <div class="col-md-2 text-muted text-small text-right">Hurdle Rate:</div>
+                    <template is="dom-if" if="[[view.hurdlerRate]]">
+                        <div class="col-md-4 text-left">[[ view.hurdlerRate ]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.hurdlerRate]]">
+                        <div class="col-md-4 text-left">N/A</div>
+                    </template>
+                    <div class="col-md-2 text-muted text-small text-right">Carry:</div>
+                    <template is="dom-if" if="[[view.carry]]">
+                        <template is="dom-if" if="[[view.dealByDealCarry]]">
+                            <div class="col-md-4 text-left">[[ view.carry ]](Deal By Deal)</div>
+                        </template>
+                        <template is="dom-if" if="[[!view.dealByDealCarry]]">
+                            <div class="col-md-4 text-left">[[ view.carry ]]</div>
+                        </template>
+                    </template>
+                    <template is="dom-if" if="[[!view.carry]]">
+                        <div class="col-md-4 text-left">N/A</div>
+                    </template>
+                </div>
+                <div class="row text-center m-t-10">
+                    <div class="col-md-2 text-muted text-small text-right">Catch Up:</div>
+                    <template is="dom-if" if="[[view.catchUp]]">
+                        <div class="col-md-4 text-left">[[ view.catchUp ]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.catchUp]]">
+                        <div class="col-md-4 text-left">N/A</div>
+                    </template>
+                    <div class="col-md-2 text-muted text-small text-right">Management Fee:</div>
+                    <template is="dom-if" if="[[view.managementFree]]">
+                        <div class="col-md-4 text-left">[[ view.managementFree ]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.managementFree]]">
+                        <div class="col-md-4 text-left">N/A</div>
+                    </template>
+                </div>
+                <div class="row text-center m-t-10">
+                    <div class="col-md-2 text-muted text-small text-right">Vintage Year:</div>
+                    <template is="dom-if" if="[[view.vintageYear]]">
+                        <div class="col-md-4 text-left">[[ view.vintageYear ]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.vintageYear]]">
+                        <div class="col-md-4 text-left">N/A</div>
+                    </template>
+                    <div class="col-md-2 text-muted text-small text-right">Fund Size (Mn):</div>
+                    <template is="dom-if" if="[[view.fundSize]]">
+                        <div class="col-md-4 text-left">[[ view.currency ]]  [[ view.fundSize ]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.fundSize]]">
+                        <div class="col-md-4 text-left">N/A</div>
+                    </template>
+                </div>
+                <div class="row text-center m-t-10">
+                    <h4>FOF Registration Information</h4>
+                </div>
+                <div class="row text-center m-t-10">
+                    <div class="col-md-2 text-muted text-small text-right">Registration Amount(Mn):</div>
+                    <template is="dom-if" if="[[view.registrationAmount]]">
+                        <div class="col-md-4 text-left">[[view.currency]]  [[ view.registrationAmount ]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.registrationAmount]]">
+                        <div class="col-md-4 text-left">N/A</div>
+                    </template>
+                    <div class="col-md-2 text-muted text-small text-right">Registered Date:</div>
+                    <template is="dom-if" if="[[view.registeredDateStr]]">
+                        <div class="col-md-4 text-left">[[ view.registeredDateStr ]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.registeredDateStr]]">
+                        <div class="col-md-4 text-left">N/A</div>
+                    </template>
+                </div>
+                <div class="row text-center m-t-10">
+                    <div class="col-md-2 text-muted text-small text-right">Registered Address:</div>
+                    <template is="dom-if" if="[[view.registeredAddress]]">
+                        <div class="col-md-10 text-left">[[ view.registeredAddress ]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.registeredAddress]]">
+                        <div class="col-md-10 text-left">N/A</div>
+                    </template>
+                </div>
+                <div class="row m-t-10">
+                    <div class="col-md-2 text-muted text-small text-right">Notes:</div>
+                    <template is="dom-if" if="[[view.notes]]">
+                        <div class="col-md-10 text-left">[[ view.notes ]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.notes]]">
+                        <div class="col-md-10 text-left">N/A</div>
+                    </template>
+                </div>
+                <div class="row text-center m-t-10">
+                    <h4>FOF Record Information</h4>
+                </div>
+                <div class="row text-center m-t-10">
+                    <div class="col-md-2 text-muted text-small text-right">AMAC Record No. :</div>
+                    <template is="dom-if" if="[[view.amacRecordNo]]">
+                        <div class="col-md-10 text-left">[[ view.amacRecordNo ]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.amacRecordNo]]">
+                        <div class="col-md-10 text-left">N/A</div>
+                    </template>
+                </div>
+                <div class="row text-center m-t-10">
+                    <div class="col-md-2 text-muted text-small text-right">Record Date:</div>
+                    <template is="dom-if" if="[[view.recordedDateStr]]">
+                        <div class="col-md-10 text-left">[[ view.recordedDateStr ]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.recordedDateStr]]">
+                        <div class="col-md-10 text-left">N/A</div>
+                    </template>
+                </div>
+                <div class="row text-center m-t-10">
+                    <div class="col-md-11">
+                        <h4>FOF Ownership Structure</h4>
+                    </div>
+                    <div class="col-md-1">
+                        <paper-fab mini icon="add" on-tap="_startAddOwnershipStructure"></paper-fab>
+                    </div>
+                </div>
+                <pc-ownership-structure id="ownershipStructure" stockholder-type="rel_fof_type"
+                                        title="[[ownershipTitle]]"
+                                        on-ownership-save="_onOwnershipSave">
+                </pc-ownership-structure>
+                <div class="row m-t-20">
+                    <div class="col-md-12 text-center">
+                        <table class="table mm-box">
+                            <thead>
+                            <tr class="th-inverse-success">
+                                <th style="width: 15%" class="text-center">Type</th>
+                                <th style="width: 15%" class="text-center">Investor</th>
+                                <th style="width: 20%" class="text-center">Currency</th>
+                                <th style="width: 20%" class="text-center">Investment Amount(Mn)</th>
+                                <th style="width: 20%" class="text-center">Ownership</th>
+                                <th style="width: 5%">&nbsp;</th>
+                                <th style="width: 5%">&nbsp;</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <template is="dom-repeat" items="{{view.ownershipStructures}}" index-as="vIndex">
+                                <tr class="text-center">
+                                    <td>{{ item.relationTypeLabel }}</td>
+                                    <td>{{ item.relation.name }}</td>
+                                    <td>{{ item.currency }}</td>
+                                    <td>{{ item.investmentAmount }}</td>
+                                    <td>{{ item.ownership }}</td>
+                                    <td>
+                                        <paper-icon-button icon="create" on-click="_editOwnership"></paper-icon-button>
+                                    </td>
+                                    <td>
+                                        <paper-icon-button icon="close" on-click="_delOwnership"></paper-icon-button>
+                                    </td>
+                                </tr>
+                            </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="row text-center m-t-10">
+                    <div class="col-md-11">
+                        <h4>FOF Company Investment Structure</h4>
+                    </div>
+                    <div class="col-md-1">
+                        <paper-fab mini icon="add" on-tap="_startAddCompanyInvestmentStructure"></paper-fab>
+                    </div>
+                </div>
+                <fof-company-investment-form id="fofCompanyInvestmentForm" title="[[companyInvestTitle]]" on-company-investment-save="_onCompanyInvestmentSave"></fof-company-investment-form>
+                <div class="row m-t-20">
+                    <div class="col-md-12 text-center">
+                        <table class="table mm-box">
+                            <thead>
+                            <tr class="th-inverse-success">
+                                <th style="width: 15%" class="text-center">Name</th>
+                                <th style="width: 15%" class="text-center">Round Name</th>
+                                <th style="width: 20%" class="text-center">Investment Date</th>
+                                <th style="width: 20%" class="text-center">Currency</th>
+                                <th style="width: 20%" class="text-center">Investment Amount(Mn)</th>
+                                <th style="width: 5%">&nbsp;</th>
+                                <th style="width: 5%">&nbsp;</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                              <template is="dom-repeat" items="[[view.companyInvestments]]">
+                                <tr class="text-center">
+                                    <td>[[item.companyName]]</td>
+                                    <td>[[item.financingRoundName]]</td>
+                                    <td>[[item.investmentDateStr]]</td>
+                                    <td>[[item.currency]]</td>
+                                    <td>[[item.investmentAmount]]</td>
+                                    <td><paper-icon-button icon="create" on-click="_editCompanyInvestment"></paper-icon-button></td>
+                                    <td><paper-icon-button icon="close" on-click="_delCompanyInvestment"></paper-icon-button></td>
+                                </tr>
+                            </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="row text-center m-t-10">
+                    <div class="col-md-11">
+                        <h4>FOF GP Fund Investment Structure</h4>
+                    </div>
+                    <div class="col-md-1">
+                        <paper-fab mini icon="add" on-tap="_startAddGPFundInvestmentStructure"></paper-fab>
+                    </div>
+                </div>
+                <fof-gpFund-investment-form id="fofgpFundInvestmentForm" title="[[gpFundInvestTitle]]" on-gp-fund-investment-save="_onGPFundInvestmentSave"></fof-gpFund-investment-form>
+                <div class="row m-t-20">
+                    <div class="col-md-12 text-center">
+                        <table class="table mm-box">
+                            <thead>
+                            <tr class="th-inverse-success">
+                                <th style="width: 15%" class="text-center">GP Fund Name</th>
+                                <th style="width: 15%" class="text-center">Commitment Date</th>
+                                <th style="width: 20%" class="text-center">Currency</th>
+                                <th style="width: 20%" class="text-center">Commitment Amount(Mn)</th>
+                                <th style="width: 5%">&nbsp;</th>
+                                <th style="width: 5%">&nbsp;</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <template is="dom-repeat" items="[[view.gpFundInvestments]]">
+                                <tr class="text-center">
+                                    <td>[[item.gpFundName]]</td>
+                                    <td>[[item.commitmentDateStr]]</td>
+                                    <td>[[item.currency]]</td>
+                                    <td>[[item.commitmentAmount]]</td>
+                                    <td><paper-icon-button icon="create" on-click="_editGPFundInvestment"></paper-icon-button></td>
+                                    <td><paper-icon-button icon="close" on-click="_delGPFundInvestment"></paper-icon-button></td>
+                                </tr>
+                            </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="row text-center m-t-10">
+                    <div class="col-md-11">
+                        <h4>FOF Capital Call</h4>
+                    </div>
+                    <div class="col-md-1">
+                        <paper-fab mini icon="add" on-tap="_startAddFofCapitalCall"></paper-fab>
+                    </div>
+                </div>
+                <fof-capital-call id="fofCapitalCall" title="[[capitalCallTitle]]" on-capital-call-save="_onCapitalCallSave"></fof-capital-call>
+                <div class="row m-t-20">
+                    <div class="col-md-12 text-center">
+                        <table class="table mm-box">
+                            <thead>
+                            <tr class="th-inverse-success">
+                                <th style="width: 15%" class="text-center">Due Date</th>
+                                <th style="width: 15%" class="text-center">Currency</th>
+                                <th style="width: 20%" class="text-center">Amount</th>
+                                <th style="width: 20%" class="text-center">Call Percent</th>
+                                <th style="width: 5%">&nbsp;</th>
+                                <th style="width: 5%">&nbsp;</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                                <template is="dom-repeat" items="[[view.capitalCalls]]" index-as="vIndex">
+                                    <tr class="text-center">
+                                        <td>[[item.dueDateStr]]</td>
+                                        <td>[[item.currency]]</td>
+                                        <td>[[item.amount]]</td>
+                                        <td>[[item.callPercent]]</td>
+                                        <td><paper-icon-button icon="create" on-click="_editCapitalCall"></paper-icon-button></td>
+                                        <td><paper-icon-button icon="close" on-click="_delCapitalCall"></paper-icon-button></td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="row text-center m-t-10">
+                    <div class="col-md-11">
+                        <h4>FOF Distribution</h4>
+                    </div>
+                    <div class="col-md-1">
+                        <paper-fab mini icon="add" on-tap="_startAddDistribution"></paper-fab>
+                    </div>
+                </div>
+                <fof-distribution id="fofDistribution" title="[[distributionTitle]]" on-distribution-save="_onDistributionSave"></fof-distribution>
+                <div class="row m-t-20">
+                    <div class="col-md-12 text-center">
+                        <table class="table mm-box">
+                            <thead>
+                            <tr class="th-inverse-success">
+                                <th style="width: 15%" class="text-center">Distribution Date</th>
+                                <th style="width: 15%" class="text-center">Currency</th>
+                                <th style="width: 20%" class="text-center">Distribution Amount</th>
+                                <th style="width: 20%" class="text-center">Distribution From</th>
+                                <th style="width: 5%">&nbsp;</th>
+                                <th style="width: 5%">&nbsp;</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                                <template is="dom-repeat" items="[[view.distributions]]" index-as="vIndex">
+                                    <tr class="text-center">
+                                        <td>[[item.dateStr]]</td>
+                                        <td>[[item.currency]]</td>
+                                        <td>[[item.amount]]</td>
+                                        <td>[[item.from]]</td>
+                                        <td><paper-icon-button icon="create" on-click="_editDistribution"></paper-icon-button></td>
+                                        <td><paper-icon-button icon="close" on-click="_delDistribution"></paper-icon-button></td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <paper-toast id="toast" text="[[text]]"></paper-toast>
+        <pc-delete-item id="deleteDlg" on-delete-item="_onDeleteItem"></pc-delete-item>
+    </template>
+    <script>
+        Polymer({
+            is: 'fof-edit',
+            properties: {
+                view: {
+                    type: Object,
+                    value: function() {
+                        return {capitalCalls: [], distributions: [],  companyInvestments: [], gpFundInvestments: []}
+                    }
+                }
+            },
+            behaviors: [
+                MyBehaviors.GlobalVariableBehavior,
+                MyBehaviors.ConfigBehavior,
+                MyBehaviors.EditBehavior,
+                MyBehaviors.CapitalCallBehavior,
+                MyBehaviors.DistributionBehavior,
+                MyBehaviors.CompanyInvestmentBehavior
+            ],
+            _showEditDlg: function () {
+                this.title = "Edit";
+                this.$.form.view = this.view;
+                this.$.form.handleTag = '';
+                this.$.form.relationInputEnabled();
+                this.$.form.shadowRoot.querySelector('paper-dialog').toggle();
+            },
+            _onOwnershipSave: function (e, data){
+                this.onCommonInnerModuleSave(data, 'ownershipStructures', true);
+            },
+            _onSaveResponse: function(e, request) {
+                if(request.response.code == 200 || request.response.code == null) {
+                    if(this.delName) {
+                        this.$.deleteDlg.shadowRoot.querySelector('paper-dialog').toggle();
+                    }
+                    if(this.addName == 'ownershipStructure') {
+                        this.$.ownershipStructure.shadowRoot.querySelector('paper-dialog').toggle();
+                    }else if(this.addName == 'capitalCall') {
+                        this.$.fofCapitalCall.shadowRoot.querySelector('paper-dialog').toggle();
+                    }else if( this.addName == 'distribution') {
+                        this.$.fofDistribution.shadowRoot.querySelector('paper-dialog').toggle();
+                    }
+                }else {
+                    this.text = 'save fail!';
+                    this.$.toast.open();
+                }
+            },
+            _onListResponse: function (e, request) {
+                if (request.response.code == 200 || request.response.code == null) {
+                    var view = request.response.fof;
+                    this.getDictLabel(view);
+                    if(view.ownershipStructures) {
+                        for(var i in view.ownershipStructures) {
+                            this.getDictLabel(view.ownershipStructures[i]);
+                        }
+                    }
+                    if(view.capitalCalls) {
+                        for(var i in view.capitalCalls) {
+                            view.capitalCalls[i].dueDateStr = moment(view.capitalCalls[i].dueDate).format("YYYY-MM-DD");
+                            this.getDictLabel(view.capitalCalls[i]);
+                        }
+                    }
+                    if(view.distributions) {
+                        for(var i in view.distributions) {
+                            view.distributions[i].dateStr = moment(view.distributions[i].date).format("YYYY-MM-DD");
+                            this.getDictLabel(view.distributions[i]);
+                        }
+                    }
+                    var fofFirm = request.response.fofFirm;
+                    if(fofFirm) {
+                        view.fofFirmName = fofFirm.name;
+                    }
+                    var gpFundInvestments = request.response.gpFundInvestments;
+                    if(gpFundInvestments) {
+                        for(var i in gpFundInvestments) {
+                            gpFundInvestments[i].commitmentDateStr = moment(gpFundInvestments[i].commitmentDate).format("YYYY-MM-DD");
+                            this.getDictLabel(gpFundInvestments[i]);
+                            for(var j in gpFundInvestments[i].capitalCalls) {
+                                gpFundInvestments[i].capitalCalls[j].dueDateStr = moment(gpFundInvestments[i].capitalCalls[j].dueDate).format("YYYY-MM-DD");
+                                gpFundInvestments[i].capitalCalls[j].callDateStr = moment(gpFundInvestments[i].capitalCalls[j].callDate).format("YYYY-MM-DD");
+                                this.getDictLabel(gpFundInvestments[i].capitalCalls[j]);
+                            }
+                            for(var j in gpFundInvestments[i].distributions) {
+                                gpFundInvestments[i].distributions[j].dateStr = moment(gpFundInvestments[i].distributions[j].date).format("YYYY-MM-DD");
+                                this.getDictLabel(gpFundInvestments[i].distributions[j]);
+                            }
+                        }
+                        view.gpFundInvestments = gpFundInvestments;
+                    }
+
+                    var companyInvestments = request.response.companyInvestments;
+                    if(companyInvestments) {
+                        for(var i in companyInvestments) {
+                            companyInvestments[i].investmentDateStr = moment(companyInvestments[i].investmentDate).format("YYYY-MM-DD");
+                            this.getDictLabel(companyInvestments[i]);
+
+                            for(var j in companyInvestments[i].capitalCalls) {
+                                companyInvestments[i].capitalCalls[j].dueDateStr = moment(companyInvestments[i].capitalCalls[j].dueDate).format("YYYY-MM-DD");
+                                companyInvestments[i].capitalCalls[j].callDateStr = moment(companyInvestments[i].capitalCalls[j].callDate).format("YYYY-MM-DD");
+                                this.getDictLabel(gpFundInvestments[i].capitalCalls[j]);
+                            }
+                            for(var j in companyInvestments[i].distributions) {
+                                companyInvestments[i].distributions[j].dateStr = moment(companyInvestments[i].distributions[j].date).format("YYYY-MM-DD");
+                                this.getDictLabel(companyInvestments[i].distributions[j]);
+                            }
+                        }
+                        view.companyInvestments = companyInvestments;
+                    }
+                    if (view.registeredDate != null) {
+                        view.registeredDateStr = moment(view.registeredDate).format("YYYY-MM-DD");
+                    }
+                    if (view.recordDate != null) {
+                        view.recordedDateStr = moment(view.recordDate).format("YYYY-MM-DD");
+                    }
+                    this.view = view;
+                } else {
+                    this.text = 'get fail!';
+                    this.$.toast.open();
+                }
+            },
+            _startAddOwnershipStructure: function () {
+                this.ownershipTitle = 'Add';
+                this.delName = '';
+                this.addName = 'ownershipStructure';
+                this.$.ownershipStructure.shadowRoot.querySelector('paper-dialog').toggle();
+            },
+            _onEditSave: function(e, data) {
+                this.set('view', {});
+                this.getDictLabel(data);
+                this.set('view', data);
+            },
+            _startAddCompanyInvestmentStructure: function() {
+                this.companyInvestTitle = "Add";
+                this.delName = '';
+                this.$.fofCompanyInvestmentForm.view = {capitalCalls:[], distributions: [], fofId: this.view.id};
+                this.$.fofCompanyInvestmentForm.shadowRoot.querySelector('paper-dialog').toggle();
+            },
+            _startAddGPFundInvestmentStructure: function() {
+                this.gpFundInvestTitle = "Add";
+                this.delName = '';
+                this.$.fofgpFundInvestmentForm.shadowRoot.querySelector('#relationIndex').keyword = '';
+                this.$.fofgpFundInvestmentForm.view = {capitalCalls:[], distributions: [], fofId: this.view.id};
+                this.$.fofgpFundInvestmentForm.shadowRoot.querySelector('paper-dialog').toggle();
+            },
+            _onGPFundInvestmentSave: function(e, data) {
+              var gpFundInvestments = this.view.gpFundInvestments;
+              for(var i in gpFundInvestments) {
+                  if(gpFundInvestments[i].id == data.id) {
+                      this.splice('view.gpFundInvestments', i, 1);
+                  }
+              }
+              this.getDictLabel(data);
+              data.commitmentDateStr = moment(data.commitmentDate).format("YYYY-MM-DD");
+              this.async(function() {
+                  this.unshift('view.gpFundInvestments', data);
+              });
+            },
+            _editGPFundInvestment: function(e) {
+                var gpFundInvestment = e.model.item;
+                this.gpFundInvestTitle = "Edit";
+                this.$.fofgpFundInvestmentForm.edit(gpFundInvestment);
+                this.$.fofgpFundInvestmentForm.shadowRoot.querySelector('paper-dialog').toggle();
+            },
+            _delGPFundInvestment: function(e) {
+                this.$.deleteDlg.shadowRoot.querySelector('paper-dialog').toggle();
+                this.delId = e.model.item.id;
+                this.delName = 'gpFundInvestment';
+            }
+        });
+    </script>
+</dom-module>

@@ -1,0 +1,350 @@
+<dom-module id="gp-firm-edit">
+    <style is='custom-style' include='shared-styles'></style>
+    <template>
+        <iron-ajax id='reqList'
+                   url='{{ host }}/gpFirm/{{editId}}'
+                   method='GET'
+                   with-credentials
+                   handle-as='json'
+                   on-response='_onListResponse'
+                   last-error="onRequestError"
+                   debounce-duration='5000'></iron-ajax>
+
+        <iron-ajax id='reqDel'
+                   url='{{host}}/{{ delName }}/{{ delId }}'
+                   method='DELETE'
+                   with-credentials
+                   handle-as='json'
+                   on-response='_onDelResponse'
+                   on-error="_onRequestError"
+                   debounce-duration='5000'></iron-ajax>
+
+       <iron-ajax id='reqSave'
+                  url='{{ host }}/gpFirm'
+                  method="PUT"
+                  with-credentials
+                  handle-as='json'
+                  content-type="application/json"
+                  on-response='_onSaveResponse'
+                  last-error="_onRequestError"
+                  debounce-duration='5000'></iron-ajax>
+        <iron-localstorage name="dictionary" value="{{ dictionary }}"></iron-localstorage>
+        <div class="row mc">
+            <div class="row pan fill-wd ct-l">
+                <div class="row text-right">
+                    <div class="col-md-12">
+                        <paper-icon-button icon="launch" class="pull-right" style="color: #428bca;"
+                                           on-tap="_showEditDlg"></paper-icon-button>
+                    </div>
+                </div>
+                <gp-firm-form id="form" on-save="_onEditSave"></gp-firm-form>
+                <div class="row text-center">
+                    <h4>GP Firm Basic Information</h4>
+                </div>
+                <div class="row">
+                    <div class="col-md-2 text-muted text-small  text-right">Name:</div>
+                    <template is="dom-if" if="[[view.name]]">
+                        <div class="col-md-10 text-left">[[view.name]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.name]]">
+                        <div class="col-md-10 text-left">N/A</div>
+                    </template>
+                </div>
+                <div class="row text-center m-t-10">
+                    <div class="col-md-2 text-muted text-small  text-right">Other Name:</div>
+                    <template is="dom-if" if="[[view.otherName]]">
+                        <div class="col-md-10 text-left">[[view.otherName]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.otherName]]">
+                        <div class="col-md-10 text-left">N/A</div>
+                    </template>
+                </div>
+                <div class="row m-t-10">
+                    <div class="col-md-2 text-muted text-small  text-right">Geography:</div>
+                    <template is="dom-if" if="[[view.geography]]">
+                        <div class="col-md-10 text-left">[[ view.geography ]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.geography]]">
+                        <div class="col-md-10 text-left">N/A</div>
+                    </template>
+                </div>
+                <div class="row m-t-10">
+                    <div class="col-md-2 text-muted text-small text-right">Notes:</div>
+                    <template is="dom-if" if="[[view.notes]]">
+                        <div class="col-md-10 text-left">[[view.notes]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.notes]]">
+                        <div class="col-md-10 text-left">N/A</div>
+                    </template>
+                </div>
+                <div class="row text-center m-t-10">
+                    <h4>GP Firm Registration Information</h4>
+                </div>
+                <div class="row text-center m-t-10">
+                    <div class="col-md-2 text-muted text-small text-right">Registration Amount(Mn):</div>
+                    <template is="dom-if" if="[[view.registrationAmount]]">
+                        <div class="col-md-4 text-left">[[view.currency]]  [[ view.registrationAmount ]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.registrationAmount]]">
+                        <div class="col-md-4 text-left">N/A</div>
+                    </template>
+                    <div class="col-md-2 text-muted text-small text-right">Registered Date:</div>
+                    <template is="dom-if" if="[[view.registeredDateStr]]">
+                        <div class="col-md-4 text-left">[[ view.registeredDateStr ]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.registeredDateStr]]">
+                        <div class="col-md-4 text-left">N/A</div>
+                    </template>
+                </div>
+                <div class="row text-center m-t-10">
+                    <div class="col-md-2 text-muted text-small  text-right">Registered Address:</div>
+                    <template is="dom-if" if="[[view.registeredAddress]]">
+                        <div class="col-md-10 text-left">[[ view.registeredAddress ]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.registeredAddress]]">
+                        <div class="col-md-10 text-left">N/A</div>
+                    </template>
+                </div>
+                <div class="row text-center m-t-10">
+                    <h4>GP Firm Record Information</h4>
+                </div>
+                <div class="row text-center m-t-10">
+                    <div class="col-md-2 text-muted text-small text-right">AMAC Record No. :</div>
+                    <template is="dom-if" if="[[view.amacRecordNo]]">
+                        <div class="col-md-10 text-left">[[ view.amacRecordNo ]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.amacRecordNo]]">
+                        <div class="col-md-10 text-left">N/A</div>
+                    </template>
+                </div>
+                <div class="row text-center m-t-10">
+                    <div class="col-md-2 text-muted text-small text-right">Record Date:</div>
+                    <template is="dom-if" if="[[view.recordedDateStr]]">
+                        <div class="col-md-10 text-left">[[ view.recordedDateStr ]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.recordedDateStr]]">
+                        <div class="col-md-10 text-left">N/A</div>
+                    </template>
+                </div>
+                <div class="row text-center m-t-20">
+                    <div class="col-md-11">
+                        <h4>GP Firm Ownership Structure</h4>
+                    </div>
+                    <div class="col-md-1">
+                        <paper-fab mini icon="add" on-tap="_startAddOwnershipStructure"></paper-fab>
+                    </div>
+                </div>
+                <pc-ownership-structure id="ownershipStructure" stockholder-type="rel_gpFirm_type" title="[[ownershipTitle]]"
+                                        on-ownership-save="_onOwnershipSave">
+                </pc-ownership-structure>
+                <div class="row m-t-20">
+                    <div class="col-md-12 text-center">
+                        <table class="table mm-box">
+                            <thead>
+                            <tr class="th-inverse-success">
+                                <th style="width: 15%" class="text-center">Type</th>
+                                <th style="width: 15%" class="text-center">Investor</th>
+                                <th style="width: 20%" class="text-center">Currency</th>
+                                <th style="width: 20%" class="text-center">Investment Amount(Mn)</th>
+                                <th style="width: 20%" class="text-center">Ownership</th>
+                                <th style="width: 5%">&nbsp;</th>
+                                <th style="width: 5%">&nbsp;</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <template is="dom-repeat" items="[[view.ownershipStructures]]" index-as="vIndex">
+                                <tr class="text-center">
+                                    <td>[[item.relationTypeLabel]]</td>
+                                    <td>[[item.relation.name]]</td>
+                                    <td>[[ item.currency ]]</td>
+                                    <td>[[ item.investmentAmount ]]</td>
+                                    <td>[[item.ownership]]</td>
+                                    <td>
+                                        <paper-icon-button icon="create" on-click="_editOwnership"></paper-icon-button>
+                                    </td>
+                                    <td>
+                                        <paper-icon-button icon="close" on-click="_delOwnership"></paper-icon-button>
+                                    </td>
+                                </tr>
+                            </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="row m-t-10">
+                    <div class="col-md-6 text-right">
+                        <h4>GP Funds</h4>
+                    </div>
+                    <div class="col-md-6 m-t-10">
+                        <div style="display: inline-block; float: right; margin-right: 10px;">
+                            <paper-fab mini icon="add" on-tap="_startAddGPFunds"></paper-fab>
+                        </div>
+                    </div>
+                </div>
+                <gp-fund-form id="gpFund" title="[[gpFundsTitle]]" handle-tag="{{handleTag}}" on-save="_onSave"></gp-fund-form>
+                <div class="row m-t-20">
+                    <div class="col-md-12 text-center">
+                       <table class="table mm-box">
+                           <thead>
+                             <tr class="th-inverse-success">
+                                 <th style="width: 25%" class="text-center">Name</th>
+                                 <th style="width: 15%" class="text-center">Currency</th>
+                                 <th style="width: 20%" class="text-center">FundSize(Mn)</th>
+                                 <th style="width: 20%" class="text-center">Vintage Year</th>
+                                 <th style="width: 15%" class="text-center">Asset Class</th>
+                                 <th style="width: 5%">&nbsp;</th>
+                                 <th style="width: 5%">&nbsp;</th>
+                             </tr>
+                           </thead>
+                           <tbody>
+                               <template is="dom-repeat" items="[[ gpFundList ]]">
+                                   <tr class="text-center">
+                                       <td>{{ item.name }}</td>
+                                       <td>{{ item.currency }}</td>
+                                       <td>{{ item.fundSize }}</td>
+                                       <td>{{ item.vintageYear }}</td>
+                                       <td>{{ item.assetClass }}</td>
+                                       <td><paper-icon-button icon="create" on-click="_editGPFund"></paper-icon-button></td>
+                                       <td><paper-icon-button icon="close" on-click="_delGPFund"></paper-icon-button></td>
+                                   </tr>
+                               </template>
+                           </tbody>
+                       </table>
+                    </div>
+                </div>
+                <div class="row text-center m-t-10">
+                    <div class="col-md-6 text-right">
+                        <h4>Person</h4>
+                    </div>
+                    <div class="col-md-6 m-t-10">
+                        <div style="display: inline-block; float: right; margin-right: 10px;">
+                            <paper-fab mini icon="add" on-tap="_startAddPerson"></paper-fab>
+                        </div>
+                    </div>
+                </div>
+                <person-form id="person" title="[[personTitle]]" on-save="_onSave"></person-form>
+                <div class="row m-t-20">
+                    <div class="col-md-12 text-center">
+                       <table class="table mm-box">
+                           <thead>
+                             <tr class="th-inverse-success">
+                                 <th style="width: 15%" class="text-center">Name</th>
+                                 <th style="width: 15%" class="text-center">Tel</th>
+                                 <th style="width: 20%" class="text-center">Email</th>
+                                 <th style="width: 5%">&nbsp;</th>
+                                 <th style="width: 5%">&nbsp;</th>
+                             </tr>
+                           </thead>
+                           <tbody>
+                             <template is="dom-repeat" items="[[ personList ]]">
+                                 <tr class="text-center">
+                                     <td>{{ item.name }}</td>
+                                     <td>{{ item.tel }}</td>
+                                     <td>{{ item.email }}</td>
+                                     <td><paper-icon-button icon="create" on-click="_editPerson"></paper-icon-button></td>
+                                     <td><paper-icon-button icon="close" on-click="_delPerson"></paper-icon-button></td>
+                                 </tr>
+                             </template>
+                           </tbody>
+                       </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <paper-toast id="toast" text="[[text]]"></paper-toast>
+        <pc-delete-item id="deleteDlg" on-delete-item="_onDeleteItem"></pc-delete-item>
+    </template>
+    <script>
+        Polymer({
+            is: 'gp-firm-edit',
+            behaviors: [
+                MyBehaviors.GlobalVariableBehavior,
+                MyBehaviors.ConfigBehavior,
+                MyBehaviors.EditBehavior,
+                MyBehaviors.CorpPersonBehavior
+            ],
+            _onOwnershipSave: function (e, data){
+                this.onCommonInnerModuleSave(data, 'ownershipStructures', true);
+            },
+            _onSaveResponse: function(e, request) {
+                if(request.response.code == 200 || request.response.code == null) {
+                    if(this.delName) {
+                        this.$.deleteDlg.shadowRoot.querySelector('paper-dialog').toggle();
+                    }else {
+                        this.$.ownershipStructure.shadowRoot.querySelector('paper-dialog').toggle();
+                    }
+                }else {
+                    this.text = 'save fail!';
+                    this.$.toast.open();
+                }
+            },
+            _onListResponse: function (e, request) {
+                if (request.response.code == 200 || request.response.code == null) {
+                    var view = request.response.view;
+                    this.getDictLabel(view);
+                    for (var i in view.ownershipStructures) {
+                        this.getDictLabel(view.ownershipStructures[i]);
+                    }
+                    this.gpFundList = request.response.gpFundList;
+                    if (this.gpFundList) {
+                        for (var i in this.gpFundList) {
+                            this.getDictLabel(this.gpFundList[i]);
+                        }
+                    }
+                    this.personList = request.response.personList;
+                    if (view.recordDate != null) {
+                        view.recordedDateStr = moment(view.recordDate).format("YYYY-MM-DD");
+                    }
+                    this.view = view;
+                } else {
+                    this.text = 'get fail!';
+                    this.$.toast.open();
+                }
+            },
+            _startAddOwnershipStructure: function () {
+                this.title = 'Add';
+                this.delName = '';
+                this.$.ownershipStructure.shadowRoot.querySelector('paper-dialog').toggle();
+            },
+            _onEditSave: function (e, data) {
+                this.set('view', {});
+                this.getDictLabel(data);
+                this.set('view', data);
+            },
+            _startAddGPFunds: function() {
+                this.gpFundsTitle = "Add";
+                this.handleTag = "gpFundAdd";
+                this.delName='';
+                this.$.gpFund.view = {gpFirmId: this.view.id, gpFirmName: this.view.name, ownershipStructures: []};
+                this.$.gpFund.relationInputEnabled();
+                this.$.gpFund.shadowRoot.querySelector('paper-dialog').toggle();
+            },
+            _onSave: function() {
+                this.$.reqList.generateRequest();
+            },
+            _editGPFund: function(e) {
+                var gpFund = e.model.item;
+                this.handleTag = "gpFirmEdit"
+                gpFund.gpFirmName = this.view.name;
+                this.$.gpFund.view = gpFund;
+                this.gpFundTitle = "Add";
+                this.$.gpFund.relationInputEnabled();
+                this.$.gpFund.shadowRoot.querySelector('paper-dialog').toggle();
+            },
+            _delGPFund: function(e) {
+                this.$.deleteDlg.shadowRoot.querySelector('paper-dialog').toggle();
+                this.delId = e.model.item.id;
+                this.delName = "gpFund";
+            },
+            _onDelResponse: function(e, request) {
+                if(request.response.code == 200 || request.response.code == null) {
+                    this.$.deleteDlg.shadowRoot.querySelector('paper-dialog').toggle();
+                    this.$.reqList.generateRequest();
+                }else {
+                    this.text = this.delToastFailText;
+                    this.$.toast.open();
+                }
+            }
+        });
+    </script>
+</dom-module>

@@ -1,0 +1,133 @@
+<link rel="import" href="./news-form.html">
+<dom-module id="news-list">
+    <style is='custom-style' include='shared-styles'></style>
+    <template>
+        <iron-ajax id="reqList"
+                   url="{{host}}/news"
+                   withCredentials=true
+                   on-response="onListResponse"
+                   on-error="onRequestError"
+                   handleAs="json">
+                   debounce-duration='5000'></iron-ajax>
+
+        <iron-ajax id="reqSearch"
+                   url="{{ host }}/news/search"
+                   withCredentials=true
+                   on-core-response="{{ onSearchResponse }}"
+                   handleAs="json"></iron-ajax>
+
+        <div id="main" class="fill mc">
+            <div class="pan fill-wd ct-m">
+                <div class="row">
+                    <div class="col-md-3"> <paper-input label="Input Company Name" type="text" value="{{filter.name}}"></paper-input> </div>
+                    <div class="col-md-7"><relation-index id="relationIndex" hidden="{{!showSelectionRelation}}"></relation-index></div>
+                    <div class="col-md-2">
+                        <paper-button raised class="m-v-m" style="display: inline-block;float: left;" on-tap="gotoPage">
+                            <span>Search</span>
+                        </paper-button>
+                    </div>
+                </div>
+            </div>
+            <div class="fill-wd ct-l m-t-30">
+                <template is="dom-repeat" items="{{ views }}">
+                    <div class="fill-wd layout vertical card">
+                        <div class="hsr">
+                            <div class="flex-7"><span><a class="link-nu" href="javascript: void(0);">{{ item.title }}</a></span></div>
+                        </div>
+                        <div class="hsr">
+                            <div class="flex-10 text-muted">
+                                <span class="text-muted">最后修改：</span>
+                                <span class="text-muted" style="width:80px; margin-left: 10px;">{{ item.luu.name }}</span>
+                                <span class="text-muted"><time is="relative-time" datetime="{{ item.lut }}"></time></span>
+                            </div>
+                            <div class="flex-2 text-center">
+                                <paper-icon-button icon="create" on-click="showEditDialog"></paper-icon-button>
+                                <paper-icon-button icon="close" on-click="showDelDialog"></paper-icon-button>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+                <template is="dom-if" if="{{ !isEmptyViews }}">
+                    <div class="fill-wd m-t-20">
+                        <pc-pager pager="{{pager}}" on-page="gotoPage"></pc-pager>
+                    </div>
+                </template>
+            </div>
+            <template is="dom-if" if="{{ isEmptyViews }}">
+                <div class="pan fill-wd ct-l m-t-30">
+                    <div class="fill-wd">
+                        <h3 class="text-center text-danger m-t-20">No records found.</h3>
+                    </div>
+                </div>
+            </template>
+        </div>
+        </div>
+        <paper-fab icon="add" class="fab-b-r fab-success" on-tap="_onTapAdd"></paper-fab>
+        <news-form id="newsForm" title="{{ title }}" on-save="_gotoPage"></news-form>
+        <paper-dialog id="deleteDlg" style="width: 30%;" modal>
+            <h4>Are you sure to delete company {{name}} ?</h4>
+            <div class="row text-center m-t-20">
+                <paper-button  dialog-dismiss>Cancel</paper-button>
+                <paper-button  dialog-confirm class="custom red">Accept</paper-button>
+            </div>
+        </paper-dialog>
+    </template>
+    <script>
+        Polymer({
+            is: 'news-list',
+            ready: function() {
+                this.showSelectionRelation = true;
+                this.filter = { page: 0, size: 10 };
+                this.newsList = [];
+                this.reference = {};
+                this.refresh();
+            },
+            behaviors: [
+                MyBehaviors.RefreshBehavior,
+                MyBehaviors.ConfigBehavior,
+                MyBehaviors.UtilBehavior
+            ],
+            refresh: function() {
+                this.$.reqList.params = this.filter;
+                this.$.reqList.generateRequest();
+            },
+            gotoPage: function() {
+                this.refresh();
+            },
+            onListResponse: function(e, req) {
+                this.views = req.response.newss;
+                this.pager = req.response.pager;
+                if (this.views == null || this.views.length == 0) {
+                    this.isEmptyViews = true;
+                } else {
+                    this.isEmptyViews = false;
+                }
+                this.doneRefresh();
+            },
+            onRequestError: function(e) {
+                this.fire('core-signal', {
+                    name: 'toast',
+                    data: {type: 'warning', message: 'Request failed.'}
+                });
+            },
+            onSearchResponse : function(e, req) {
+                this.newsList = req.response.newss;
+                this.pager = req.response.pager;
+                this.reference = req.response.reference || {};
+            },
+            _onTapAdd: function() {
+                this.title = "Add";
+                this.$.newsForm.news = null;
+                this.$.newsForm.shadowRoot.querySelector('paper-dialog').toggle();
+            },
+            _showDelDialog: function() {
+                this.$.deleteDlg.toggle();
+            },
+            showEditDialog: function(e) {
+                this.title = "Edit";
+                this.$.newsForm.news = e.model.item;
+                this.$.newsForm.shadowRoot.querySelector('paper-dialog').toggle();
+            }
+        });
+    </script>
+</dom-module>

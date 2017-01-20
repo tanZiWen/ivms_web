@@ -1,0 +1,61 @@
+<dom-module id="meeting-topic-form">
+    <style is='custom-style' include='shared-styles'>
+    </style>
+    <template>
+        <paper-dialog id="form" style="width: 50%;">
+            <paper-dialog-scrollable>
+                <h2>{{title}} Topics</h2>
+                <div class="vertical layout">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <paper-input label="Title" type="text" value="{{  ec.registeredAddress  }}"/>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <paper-textarea label="Notes" value="{{ v.notes }}" rows=5></paper-textarea>
+                        </div>
+                    </div>
+                    <div class="row m-t-20">
+                        <div class="col-md-7">
+                            <h3>Relation</h3>
+                        </div>
+                        <div class="col-md-5">
+                            <relation-index on-select="selectParticipant" keyword="{{ participantKeyword }}" fixedtype="{{type}}" typeenabled="false"></relation-index>
+                        </div>
+                    </div>
+                    <table class="table mm-box m-t-20">
+                        <thead>
+                        <tr class="th-inverse">
+                            <th style="width: 30%">Type</th>
+                            <th style="width: 45%">Name</th>
+                            <th style="width: 25%">&nbsp;</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <template repeat="{{ c, cIndex in ec.comps }}" if="{{ ec.comps != null && ec.comps.length > 0 }}">
+                            <tr>
+                                <td>{{ reference.company[c].name }}</td>
+                                <td>{{ reference.company[c].alias }}</td>
+                                <td>{{ reference.company[c].listedCode }}</td>
+                                <td>{{ datasource.values.dictionary.geography[reference.company[c].geographyCode].label }}</td>
+                                <td><paper-icon-button icon="close" on-click="{{ delComp}}"></paper-icon-button></td>
+                            </tr>
+                        </template>
+                        </tbody>
+                    </table>
+
+                    <div class="row text-center m-t-20">
+                        <paper-button raised dialog-dismiss>Cancel</paper-button>
+                        <paper-button raised dialog-confirm class="custom green">Accept</paper-button>
+                    </div>
+                </div>
+            </paper-dialog-scrollable>
+        </paper-dialog>
+    </template>
+    <script>
+        Polymer({
+            is: 'meeting-topic-form',
+        });
+    </script>
+</dom-module>

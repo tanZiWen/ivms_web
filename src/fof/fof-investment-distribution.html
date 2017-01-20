@@ -1,0 +1,77 @@
+<dom-module id="fof-investment-distribution">
+    <template>
+        <style is='custom-style' include='shared-styles'></style>
+        <iron-localstorage name="dictionary" value="{{ dictionary }}"></iron-localstorage>
+        <paper-dialog id="form" style="width: 60%;" modal>
+            <paper-dialog-scrollable>
+                <h2>{{title}} FOF Investment Distribution</h2>
+                <div class="vertical layout">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <paper-input id="date" label="Distribution Date : YYYY-MM-DD" type="date"
+                                         value="{{ view.dateStr }}"/>
+                        </div>
+                        <div class="col-md-6">
+                            <paper-dropdown-menu label="Select Currency" vertical-align="bottom" horizontal-align="left"
+                                                 class="fill-wd">
+                                <paper-listbox class="dropdown-content" selected="{{ view.currencyCode }}"
+                                               attr-for-selected="value" style="width:18em;">
+                                    <paper-item value=""></paper-item>
+                                    <template is="dom-repeat" items="{{ dictionary.currency.list}}">
+                                        <paper-item value="{{ item.value }}">{{ item.label }}</paper-item>
+                                    </template>
+                                </paper-listbox>
+                            </paper-dropdown-menu>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <paper-input label="Distribution Amount(Mn)" type="text" value="{{ view.amount }}"/>
+                        </div>
+                        <div class="col-md-6">
+                            <paper-input label="Distribution From" type="text" value="{{ view.from }}"/>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <paper-textarea label="Notes" value="{{ view.notes }}" rows=5></paper-textarea>
+                        </div>
+                    </div>
+                </div>
+            </paper-dialog-scrollable>
+            <div class="row text-center m-t-20">
+                <paper-button raised dialog-dismiss>Cancel</paper-button>
+                <paper-button raised class="custom green" on-tap="_onSave">Accept</paper-button>
+            </div>
+        </paper-dialog>
+    </template>
+    <script>
+        Polymer({
+            is: 'fof-investment-distribution',
+            properties: {
+                view: {
+                    type: Object,
+                    value: function() {
+                        return {}
+                    }
+                }
+            },
+            _onSave: function() {
+                var invalid = true;
+                if (this.view.dateStr && !this.view.dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                    this.$.date.invalid = true;
+                    invalid = false;
+                }
+                if (!invalid) {
+                    return;
+                }
+                this.view.date = new Date(this.view.dateStr)
+                this.fire('distribution-save', this.view);
+                this.view = {};
+            },
+            edit: function(data) {
+                this.view = data;
+            }
+        });
+    </script>
+</dom-module>

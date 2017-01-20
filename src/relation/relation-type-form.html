@@ -1,0 +1,54 @@
+<dom-module id="relation-type-form">
+    <style is='custom-style' include='shared-styles'></style>
+    <template>
+        <iron-localstorage name="dictionary" value="{{ dictionary }}"></iron-localstorage>
+        <paper-dropdown-menu id="relationType" required invalid error-message="This field is required" auto-validate disabled="[[relationTypeEnabled]]" style="width: 8em;" vertical-align="bottom" horizontal-align="left" class="fill-wd" label="[[relationTypeLabel]]">
+            <paper-listbox class="dropdown-content" selected="{{ type }}" attr-for-selected="value">
+                <template is="dom-repeat" items="{{ relationTypes }}">
+                    <paper-item style="width: 8em;" value="{{ item.value }}">{{ item.label }}</paper-item>
+                </template>
+            </paper-listbox>
+        </paper-dropdown-menu>
+    </template>
+    <script>
+        Polymer({
+            is: 'relation-type-form',
+            properties: {
+                dictionary: {
+                    type: Object,
+                    observer: '_dictionaryChanged'
+                },
+                relationType: {
+                    type: String,
+                    observer: '_relationTypeChanged'
+                },
+                type: {
+                    type: String,
+                    observer: '_onTypeChanged'
+                },
+                relationTypeEnabled: {
+                    type: String,
+                    value: false
+                }
+            },
+            _dictionaryChanged: function() {
+                if(_.isEmpty(this.relationTypes)) {
+                    this.refreshRelationTypes();
+                }
+            },
+            _relationTypeChanged: function() {
+                if(this.dictionary) {
+                    this.relationTypes = this.dictionary[this.relationType].list;
+                }
+            },
+            refreshRelationTypes: function() {
+                if(this.relationType && this.dictionary) {
+                    this.relationTypes = this.dictionary[this.relationType].list;
+                }
+            },
+            _onTypeChanged: function(val) {
+                this.fire('selected-type', val);
+            }
+        });
+    </script>
+</dom-module>

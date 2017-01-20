@@ -1,0 +1,37 @@
+<dom-module id="relation-dropdown-item">
+    <style is='custom-style' include='shared-styles'></style>
+    <template>
+        <div style="margin-left:0;">
+            <paper-input error-message="This field is required" style="float: left; width: 12em;"
+                         value="{{keyword}}" on-keyup="_onKeywordChanged" label="{{selectItemLabel}}" disabled="{{inputEnabled}}"
+                         invalid required auto-validate></paper-input>
+            <template is="dom-if" if="{{opened}}">
+                <div class="row" style="max-height: 400px; width: 12em; overflow: scroll; margin-top: 4em; margin-left: 0.2em; position: absolute; z-index: 1000; border-left: 1px solid #efefef; background-color: #FFFFFF;">
+                    <template is="dom-repeat" items="{{relations}}">
+                        <iron-pages selected="{{type}}" attr-for-selected="name">
+                            <person-dropdown-item person="{{ item }}" name="1" on-select-person="_onSelectRelationDropdownItem"></person-dropdown-item>
+                            <fof-dropdown-item fof="{{ item }}" name="2" on-select-fof="_onSelectRelationDropdownItem"></fof-dropdown-item>
+                            <fof-firm-dropdown-item fof-firm="{{ item }}" name="3" on-select-fof-firm="_onSelectRelationDropdownItem"></fof-firm-dropdown-item>
+                            <gp-fund-dropdown-item gp-fund="{{ item }}" name="4" on-select-gp-fund="_onSelectRelationDropdownItem"></gp-fund-dropdown-item>
+                            <gp-firm-dropdown-item gp-firm="{{ item }}" name="5" on-select-gp-firm="_onSelectRelationDropdownItem"></gp-firm-dropdown-item>
+                            <lp-dropdown-item lp="{{ item }}" name="5" on-select-lp="_onSelectRelationDropdownItem"></lp-dropdown-item>
+                            <company-dropdown-item company="{{ item }}" name="7" on-select-company="_onSelectRelationDropdownItem"></company-dropdown-item>
+                        </iron-pages>
+                    </template>
+                </div>
+            </template>
+        </div>
+    </template>
+    <script>
+        Polymer({
+            is: 'relation-dropdown-item',
+            _onKeywordChanged: function(e) {
+                this.fire('search', this.keyword)
+            },
+            _onSelectRelationDropdownItem: function(e, data) {
+                this.keyword = data.name;
+                this.fire('select-dropdown-item', data);
+            }
+        });
+    </script>
+</dom-module>

@@ -1,0 +1,144 @@
+<link rel="import" href="../../bower_components/paper-toggle-button/paper-toggle-button.html">
+<dom-module id="company-financials-form">
+    <style is='custom-style' include='shared-styles'></style>
+    <template>
+        <iron-localstorage name="dictionary" value="{{ dictionary }}"></iron-localstorage>
+        <paper-dialog id="form" style="width: 70%;" modal>
+            <paper-dialog-scrollable>
+                <h2>{{title}} Financials Information</h2>
+
+                <div class="row">
+                    <div class="col-md-4">
+                        <paper-input label="Reporting Start Date: YYYY-MM-DD" type="date"
+                                     value="{{ financial.reportingStartDateStr  }}"
+                                     error="Bad date format. YYYY-MM-DD is OK"/>
+                    </div>
+                    <div class="col-md-4">
+                        <paper-input label="Reporting End Date: YYYY-MM-DD" type="date"
+                                     value="{{ financial.reportingEndDateStr  }}"
+                                     error="Bad date format. YYYY-MM-DD is OK"/>
+                    </div>
+                    <div class="col-md-4">
+                        <paper-dropdown-menu label="Select Currency" vertical-align="bottom" horizontal-align="left"
+                                             class="fill-wd">
+                            <paper-listbox class="dropdown-content" selected="{{ financial.currencyCode }}"
+                                           attr-for-selected="value">
+                                <paper-item value=""></paper-item>
+                                <template is="dom-repeat" items="{{ dictionary.currency.list}}">
+                                    <paper-item value="{{ item.value }}">{{ item.label }}</paper-item>
+                                </template>
+                            </paper-listbox>
+                        </paper-dropdown-menu>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <paper-input label="Revenue(Mn)" type="text" value="{{ financial.revenue }}"/>
+                    </div>
+                    <div class="col-md-4">
+                        <paper-input label="Gross Profit(Mn)" type="text" value="{{ financial.grossProfit }}"/>
+                    </div>
+                    <div class="col-md-4">
+                        <paper-input label="Net Income(Mn)" type="text" value="{{ financial.netIncome }}"/>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <paper-input label="Cash(Mn)" type="text" value="{{ financial.cash }}"/>
+                    </div>
+                    <div class="col-md-4">
+                        <paper-input label="EBITDA(Mn)" type="text" value="{{ financial.ebitda }}"/>
+                    </div>
+                    <div class="col-md-4">
+                        <paper-input label="Operating Income(Mn)" type="text" value="{{ financial.operatingIncome }}"/>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <paper-input label="Operating Cash Flow(Mn)" type="text" value="{{ financial.operatingCashFlow }}"/>
+                    </div>
+                    <div class="col-md-4">
+                        <paper-input label="Total Asset(Mn)" type="text" value="{{ financial.totalAsset }}"/>
+                    </div>
+                    <div class="col-md-4">
+                        <paper-input label="Total Liability(Mn)" type="text" value="{{ financial.totalLiability }}"/>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <paper-input label="Total Equity(Mn)" type="text" value="{{ financial.totalEquity }}"/>
+                    </div>
+                    <div class="col-md-4 m-t-30">
+                        <div class="col-md-6">
+                            <span>Estimated</span>
+                        </div>
+                        <div class="col-md-6">
+                            <paper-toggle-button checked={{financial.estimated}}></paper-toggle-button>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <paper-input label="Estimated By" type="text" value="{{ financial.estimatedBy }}"/>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <paper-textarea label="Notes" value="{{ financial.notes }}" rows=5></paper-textarea>
+                    </div>
+                </div>
+                <div class="row text-center m-t-20">
+                    <paper-button raised dialog-dismiss on-tap="_onCancel">Cancel</paper-button>
+                    <paper-button raised dialog-confirm class="custom green" on-tap="_onSave">Accept</paper-button>
+                </div>
+            </paper-dialog-scrollable>
+        </paper-dialog>
+    </template>
+    <script>
+        Polymer({
+            is: 'company-financials-form',
+            properties: {
+                financial: {
+                    type: Object,
+                    value: function () {
+                        return {};
+                    }
+                },
+                handleTag: {
+                    type: String,
+                    value: ''
+                }
+            },
+            behaviors: [
+                MyBehaviors.ConfigBehavior
+            ],
+            _onSave: function () {
+                var invalid = true;
+                if (this.financial.reportingStartDateStr && !this.financial.reportingStartDateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                    var reportingStartDate = Polymer.dom(this.$.viewFormDialog).querySelector('#reportingStartDate');
+                    reportingStartDate.isInvalid = true;
+                    invalid = false;
+                }
+                if (this.financial.reportingEndDateStr && !this.financial.reportingEndDateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                    var reportingEndDate = Polymer.dom(this.$.viewFormDialog).querySelector('#reportingEndDate');
+                    reportingEndDate.isInvalid = true;
+                    invalid = false;
+                }
+                if (!invalid) {
+                    return;
+                }
+                this.set('financial.reportingStartDate', new Date(this.financial.reportingStartDateStr));
+                this.set('financial.reportingEndDate', new Date(this.financial.reportingEndDateStr));
+                this.fire('financials-save', this.financial);
+                this.reset();
+            },
+            _onCancel: function () {
+                this.reset();
+            },
+            reset: function () {
+                this.financial = {};
+            },
+            edit: function (financial) {
+                this.financial = financial;
+            }
+        });
+    </script>
+</dom-module>

@@ -1,0 +1,291 @@
+<link rel="import" href="./file-form.html">
+<dom-module id="file-list">
+<style is='custom-style' include='shared-styles'></style>
+<style>
+
+</style>
+
+<template>
+
+    <iron-ajax id="reqList"
+               url="{{host}}/files"
+               withcredentials="true"
+               on-response="onListResponse"
+               on-error="onRequestError"
+               handle-as="json">
+    </iron-ajax>
+    <iron-ajax id="reqDel"
+               url="{{host}}/file/{{ deletingFile.id }}"
+               withcredentials="true" method="DELETE"
+               on-response=" onDelResponse"
+               on-error=" onRequestError "
+               handle-as="json">
+    </iron-ajax>
+    <pc-datasource></pc-datasource>
+    <file-form id="fileForm" title="{{title}}" on-save="refresh"></file-form>
+    <iron-signals on-iron-signal-dictionary="_onDictionaryChanged"></iron-signals>
+    <div id="main" class="fill mc">
+        <div class="pan fill-wd ct-m">
+            <div class="row col-xs-offset-0">
+                <div class="col-sm-12">
+                    <paper-input label="File Title" value="{{ filter.title }}" class="input-md"
+                                 style="float: left;"></paper-input>
+                    <paper-dropdown-menu label="Select Source" style="margin-left: 10px; min-width: 100px;" >
+                        <paper-listbox id="fileSource" class="dropdown-content" selected="{{filter.source}}" on-iron-select="onFileSourceSelect">
+                            <paper-item value="" class="bg-warning">clear</paper-item>
+                            <template is="dom-repeat" items="{{fileSourceList}}">
+                                <paper-item value="{{item.value}}">{{item.label}}</paper-item>
+                            </template>
+                        </paper-listbox>
+                    </paper-dropdown-menu>
+                    <paper-dropdown-menu label="Select Type" style="margin-left: 10px; min-width: 100px;"
+                                         disabled="{{ !filter.source }}">
+                        <paper-listbox id="fileSourceType" class="dropdown-content" selected="{{filter.type}}">
+                            <paper-item value="" class="bg-warning">clear</paper-item>
+                            <template is="dom-repeat" items="{{ fileTypeList }}">
+                                <paper-item value="{{item.value}}">{{item.label}}</paper-item>
+                            </template>
+                        </paper-listbox>
+                    </paper-dropdown-menu>
+                    <paper-button raised="" style="display: inline-block; position: relative; left: 30px;"
+                                  on-click="search">
+                        Search
+                    </paper-button>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12">
+                        <relation-index style="margin-left: 10px" id="relationIndex" hidden$={{!showSelectionRelation}}></relation-index>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="fill-wd ct-l m-t-30">
+            <template is="dom-repeat" items="{{files}}">
+                <div class="fill-wd layout vertical card">
+                    <div class="hsr">
+                        <div class="flex-7"><span><a class="link-nu" href="javascript: void(0);">{{item.title}}</a></span></div>
+                        <div class="col-sm-5 text-right" style="padding-top: 5px;">
+                            <p class="text-muted">
+                                {{_computePath(item)}}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="hsr">
+                        <div class="flex-10 text-muted">
+                            <span>最后修改：</span>
+                            <span>{{item.modifierTimeStr}}</span>
+                        </div>
+                        <div class="flex-2 text-center">
+                            <paper-icon-button icon="create" on-click="showEditDialog"></paper-icon-button>
+                            <paper-icon-button icon="close" on-click="showDelDialog"></paper-icon-button>
+                            <paper-icon-button icon="file-download" on-click="onAttachmentDownload"></paper-icon-button>
+                        </div>
+                    </div>
+                </div>
+            </template>
+            <div class="fill-wd m-t-20">
+                <pc-pager pager="{{pager}}" on-page="gotoPage"></pc-pager>
+            </div>
+        </div>
+        <paper-fab icon="add" class="fab-b-r fab-success" on-tap="showAddDialog"></paper-fab>
+    </div>
+    </div>
+    <paper-dialog id="deleteDlg" backdrop="" transition="core-transition-center">
+            <p>Are you sure to delete file '
+                <span>{{ deletingFile.title }}</span>
+                '</p>
+        <paper-button raised dialog-dismiss>Cancel</paper-button>
+        <paper-button raised dialog-confirm class="custom green">Sure</paper-button>
+    </paper-dialog>
+
+    <paper-dialog id="deleteDlg" style="width: 30%;" backdrop=true>
+        <h4>Are you sure to delete file <b>"{{ deletingFile.title }}"</b> ?</h4>
+        <div class="row text-center m-t-20">
+            <paper-button dialog-dismiss>Cancel</paper-button>
+            <paper-button dialog-confirm class="custom red">Sure</paper-button>
+        </div>
+    </paper-dialog>
+
+</template>
+<script>
+    Polymer({
+        is: 'file-list',
+        properties: {
+            LOG_TAG: {
+                type: String,
+                value: 'file-list>'
+            },
+            filter: {
+                type: Object,
+                value: {}
+            },
+            showSelectionRelation: { notify: true }
+        },
+        ready: function () {
+            this.filter = {
+                page: 0,
+                size: 10,
+                relatedType: 0,
+                relatedName: ''
+            };
+            this.showSelectionRelation = true;
+            this.customFilter = {};
+            this.files = [];
+            this.deletingFile = {};
+            this.showSelectionRelation = true;
+            this.set('$.relationIndex.addEnabled', false);
+            this.set('$.relationIndex.showEnabled', true);
+        },
+        _onDictionaryChanged: function(e, data) {
+            this.dict = data;
+            this.fileSourceList = this.dict.file_source.list;
+            this.refresh();
+        },
+        onFileSourceSelect: function() {
+            if (this.filter.source) {
+                this.fileTypeList = this.dict['file_source_type_' + this.filter.source].list
+            }
+        },
+        onFileSourceTypeSelect: function() {
+
+        },
+        behaviors: [
+            MyBehaviors.RefreshBehavior,
+            MyBehaviors.ConfigBehavior,
+            MyBehaviors.UtilBehavior
+        ],
+        onListResponse: function (e, req) {
+            this.files = req.response.files;
+            this.pager = req.response.pager;
+            this.doneRefresh();
+            this.fire('core-signal', {
+                name: 'toast',
+                data: {
+                    type: 'warning',
+                    message: 'Request failed.'
+                }
+            });
+        },
+        onRequestError: function (e) {
+        },
+        refresh: function () {
+            this.$.reqList.params = this.filter;
+            this.$.reqList.generateRequest();
+        },
+        search: function () {
+            this.set('filter.page', 0);
+            if (this.$.relationIndex.type == '') {
+                this.set('filter.relatedType', 0);
+            } else {
+                this.set('filter.relatedType', this.$.relationIndex.type);
+            }
+            if (this.$.relationIndex.keyword)
+                this.set('filter.relatedName', this.$.relationIndex.keyword);
+            if (this.customFilter) {
+                if (this.customFilter.type) {
+                    this.set('filter.relatedType', this.customFilter.type);
+                }
+                if (this.customFilter.name) {
+                    this.set('filter.relatedName', this.customFilter.name);
+                }
+                if (this.customFilter.rid) {
+                    this.set('filter.rid', this.customFilter.rid);
+                }
+            }
+            this.$.reqList.params = this.filter;
+            this.refresh();
+        },
+        onSearchResponse: function () {
+            if (!this.$.reqList.response.code || this.$.reqSearch.response.code == 200) {
+                this.files = this.$.reqSearch.response.files;
+                this.pager = this.$.reqSearch.response.pager;
+            } else {
+                console.error(this.LOG_TAG, 'Failed to search files', this.$.reqSearch.response);
+            }
+        },
+        gotoPage: function (e, page) {
+            this.filter.page = page;
+            this.refresh();
+        },
+        showEditDialog: function (e) {
+            console.log(e.model.item);
+            this.title='Edit';
+            this.$.fileForm.file = e.model.item;
+            this.$.fileForm.shadowRoot.querySelector('paper-dialog').toggle();
+        },
+        showDelDialog: function (e) {
+            console.log(e.model.item);
+            this.deletingFile = e.model.item;
+            this.$.deleteDlg.toggle();
+        },
+        onClickDelete: function (e) {
+            this.$.reqDel.go();
+        },
+        showAddDialog: function (e) {
+            this.title='Add';
+            this.$.fileForm.file = {};
+            this.$.fileForm.shadowRoot.querySelector('paper-dialog').toggle();
+        },
+        onFilterSourceSelect: function (e, detail, sender) {
+            if (!this.filter.source) {
+                this.filter.source = null;
+                this.filter.type = null;
+            }
+            this.fileTypeList = this.dict['file_source_type_' + this.filter.source].list
+        },
+
+        onFilterTypeSelect: function (e, detail, sender) {
+            if (!this.filter.type) {
+                this.set('filter.type', null);
+            }
+            this.set('filter.type', null);
+        },
+        onDelResponse: function (e, response) {
+            if (response.code == 200 || response.code == null) {
+                this.fire('iron-signal', {
+                    name: 'toast',
+                    data: {
+                        type: 'warning',
+                        message: response.response.message
+                    }
+                });
+                this.refresh();
+            } else {
+                this.fire('iron-signal', {
+                    name: 'toast',
+                    data: {
+                        type: 'warning',
+                        message: 'delete failed'
+                    }
+                });
+            }
+        },
+        onAttachmentDownload: function (e, detail, sender) {
+            var id = e.target.templateInstance.model.file.id;
+            window.open(this.datasource.values.api + '/file/' + id + '/attachment');
+        },
+        _computePath: function(file) {
+            var fileSourceMap = this.parseMap(this.fileSourceList, 'value');
+            var sourceName = fileSourceMap[file.source].label;
+            var fileSourceTypeMap = this.parseMap(this.dict['file_source_type_' + file.source].list, 'value');
+            var typeName = fileSourceTypeMap[file.type].label;
+            return sourceName + '>' + typeName;
+        },
+        onAttachmentDownload : function(e, detail, sender) {
+            var id = e.model.item.id;
+            window.open('{{host}}' + '/file/' + id + '/attachment');
+        },
+        tokenList: function (obj) {
+            var pieces = [];
+            for (var key in obj) {
+                if (obj[key]) {
+                    pieces.push(key);
+                }
+            }
+            return pieces.join(' ');
+        }
+    });
+</script>
+</dom-module>

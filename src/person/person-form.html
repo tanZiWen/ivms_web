@@ -1,0 +1,168 @@
+<dom-module id="person-form">
+    <style is='custom-style' include='shared-styles'>
+    </style>
+    <template>
+      <iron-ajax id='reqGet'
+                 url='{{ host }}/person/{{person.id}}'
+                 method='GET'
+                 with-credentials
+                 handle-as='json'
+                 on-response='_onListResponse'
+                 last-error="_onRequestError"
+                 debounce-duration='5000'></iron-ajax>
+
+        <iron-ajax id='reqSave'
+                   url='{{ host }}/person'
+                   with-credentials
+                   handle-as='json'
+                   on-response='_onSaveResponse'
+                   headers='{"Accept": "application/json", "Content-Type": "application/json"}'
+                   last-error="onRequestError"
+                   debounce-duration='5000'></iron-ajax>
+
+      <iron-localstorage name="dictionary" value="{{dictionary}}"></iron-localstorage>
+      <paper-dialog id="form" style="width: 70%;" modal>
+          <paper-dialog-scrollable>
+          <h2>{{title}} Person Information</h2>
+          <div class="vertical layout">
+              <div class="row">
+                  <div class="col-md-6">
+                      <paper-input id="name" error-message="This field is required" label="Name" type="text" value="{{ view.name }}" invalid required auto-validate/>
+                  </div>
+                  <div class="col-md-6">
+                      <paper-input label="English Name" type="text" value="{{ view.enname }}"/>
+                  </div>
+              </div>
+              <div class="row">
+                  <div class="col-md-6">
+                      <paper-input label="Tel" type="text" value="{{ view.tel }}"/>
+                  </div>
+                  <div class="col-md-6">
+                      <paper-input label="Email" type="text" value="{{ view.email }}"/>
+                  </div>
+              </div>
+              <div class="row">
+                <div class="col-md-12">
+                    <paper-textarea label="Education background" value="{{ view.edu }}" rows=3></paper-textarea>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-12">
+                    <paper-textarea label="Notes" value="{{ view.notes }}" rows=5></paper-textarea>
+                </div>
+                <div class="m-t-20">
+                    <div class="col-md-11">
+                        <h2>Work Experiences</h2>
+                    </div>
+                    <div class="col-md-1">
+                        <paper-fab mini icon="add" on-click="_startAddWorkExperience"></paper-fab>
+                    </div>
+                </div>
+              </div>
+              <pc-work-experience handle-tag="{{handleTag}}" id="workExperience" title="{{title}}" on-we-saved='_onWorkExpericeSave' work-experience-type="{{workExperienceType}}"></pc-work-experience>
+              <div class="row m-b-30 m-t-20">
+                   <table class="table">
+                       <thead>
+                         <tr class="th-inverse">
+                             <th style="width: 15%">Join Date</th>
+                             <th style="width: 15%">Leave Date</th>
+                             <th style="width: 20%">Corporation Name</th>
+                             <th style="width: 15%;">Corporation Type</th>
+                             <th style="width: 5%">Primary</th>
+                             <th style="width: 15%"></th>
+                         </tr>
+                       </thead>
+                       <tbody>
+                       <template is='dom-repeat' items="{{ view.workExperienceViews }}" as-index="{{delIndex}}">
+                           <tr>
+                               <td>{{ item.joinDateStr }}</td>
+                               <td>
+                                   {{ item.leaveDateStr }}
+                               </td>
+                               <td>{{ item.corpName }}</td>
+                               <td>{{ item.corpTypeName }}</td>
+                               <td>
+                                   <template is="dom-if" if="{{item.primary}}">
+                                       Yes
+                                   </template>
+                                   <template is="dom-if" if="{{!item.primary}}">
+                                       No
+                                   </template>
+                               </td>
+                               <td>
+                                   <paper-icon-button class="small" icon="create" on-click="_startEditWorkExperience"></paper-icon-button>
+                                   <paper-icon-button class="small" icon="close" on-click="_showDeleteWorkExperienceDialog"></paper-icon-button>
+                               </td>
+                           </tr>
+                       </template>
+                       </tbody>
+                   </table>
+               </div>
+              <div class="row text-center m-t-20">
+                  <paper-button raised dialog-dismiss>Cancel</paper-button>
+                  <paper-button raised class="custom green" on-tap="_onSave">Accept</paper-button>
+              </div>
+          </div>
+        </paper-dialog-scrollable>
+         </paper-dialog>
+         <pc-delete-item id="deleteDlg" on-delete-item="_onDeleteItem"></pc-delete-item>
+    </template>
+    <script>
+      Polymer({
+        is: 'person-form',
+        properties: {
+            view: {
+                type: Object,
+                value: function() {
+                    return {workExperienceViews: []};
+                  }
+            },
+            handleTag: {
+                type: String
+            }
+        },
+        ready: function() {
+            console.log(this.view.name);
+        },
+        behaviors: [
+            MyBehaviors.ConfigBehavior,
+            MyBehaviors.GlobalVariableBehavior
+        ],
+        _startAddWorkExperience: function() {
+            this.title = 'Add';
+            this.workExperienceType = 'work_experience_type';
+            this.$.workExperience.shadowRoot.querySelector('paper-dialog').toggle();
+        },
+        _onWorkExpericeSave: function(e, data) {
+            this.$.workExperience.shadowRoot.querySelector('paper-dialog').toggle();
+            this.onCommonInnerModuleSave(data, 'workExperienceViews', false);
+        },
+        _onSave: function() {
+            if(this.view.id) {
+                this.$.reqSave.method = "PUT";
+            }else {
+                this.$.reqSave.method = "POST";
+            }
+            if(!this.$.name.invalid) {
+                this.$.reqSave.body = JSON.stringify(this.view);
+                this.$.reqSave.generateRequest();
+            }
+        },
+        _startEditWorkExperience: function(e) {
+            var workExperience = e.model.item;
+            this.title = "Edit";
+            this.workExperienceType = 'work_experience_type';
+            this.$.workExperience.edit(workExperience);
+            this.$.workExperience.shadowRoot.querySelector('paper-dialog').toggle();
+        },
+        _showDeleteWorkExperienceDialog: function(e) {
+            this.$.deleteDlg.shadowRoot.querySelector('paper-dialog').toggle();
+            this.delIndex = e.model.delIndex;
+        },
+        _onDeleteItem: function(e, data) {
+            this.splice('view.workExperienceViews', this.delIndex, 1);
+            this.$.deleteDlg.shadowRoot.querySelector('paper-dialog').toggle();
+        }
+      });
+    </script>
+</dom-module>

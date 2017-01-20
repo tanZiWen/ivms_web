@@ -1,0 +1,69 @@
+<dom-module id="fof-simple-form">
+    <template>
+        <style is='custom-style' include='shared-styles'></style>
+
+        <iron-ajax id='reqSave'
+                   url='{{ host }}/fof'
+                   method='POST'
+                   with-credentials
+                   handle-as='json'
+                   content-type="application/json"
+                   on-response='_onSaveResponse'
+                   on-error="_onRequestError"
+                   debounce-duration='5000'></iron-ajax>
+
+        <iron-localstorage name="dictionary" value="{{ dictionary }}"></iron-localstorage>
+        <div class="row text-left">
+            <div class="row">
+                <div class="col-md-12">
+                    <h2>Add Simple FOF</h2>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                  <paper-input id="name" error-message="This field is required" value="{{fof.name}}" label="Name" required></paper-input>
+                </div>
+                <div class="col-md-6">
+                    <paper-dropdown-menu label="Select Geography" vertical-align="bottom" horizontal-align="left" class="fill-wd">
+                        <paper-listbox class="dropdown-content" style="width:18em;" selected="{{fof.geographyCode}}" >
+                            <template is="dom-repeat" items="{{ dictionary.geography.list}}">
+                                <paper-item value="{{ item.value }}">{{ item.label }}</paper-item>
+                            </template>
+                        </paper-listbox>
+                    </paper-dropdown-menu>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <paper-textarea label="Notes" value="{{ fof.notes }}" rows=5></paper-textarea>
+                </div>
+            </div>
+        </div>
+    </template>
+    <script>
+        Polymer({
+            is: 'fof-simple-form',
+            properties: {
+                fof: {
+                    type: Object,
+                    value: function() {
+                        return {}
+                    }
+                }
+            },
+            behaviors: [
+                MyBehaviors.GlobalVariableBehavior
+            ],
+            save: function() {
+                if(!this.$.name.invalid) {
+                    this.$.reqSave.body = JSON.stringify(this.fof);
+                    this.$.reqSave.generateRequest();
+                }
+            },
+            _onSaveResponse: function(e, resquest) {
+                var fof = e.detail.response.fof;
+                this.fire('saved', fof);
+            }
+        });
+    </script>
+</dom-module>

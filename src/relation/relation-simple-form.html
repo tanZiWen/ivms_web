@@ -1,0 +1,38 @@
+<dom-module id="relation-simple-form">
+    <style is='custom-style' include='shared-styles'>
+      paper-button.green {
+       background-color: var(--paper-green-500);
+       color: white;
+      }
+      paper-button.green[active] {
+        background-color: var(--paper-red-500);
+      }
+    </style>
+    <template>
+        <paper-dialog id="form" style="width:50%">
+            <div class="vertical layout">
+                <iron-pages selected="{{relationType}}" attr-for-selected="name" selected-item="{{selectedItem}}">
+                    <person-simple-form name="1" on-saved="onSaved"></person-simple-form>
+                    <fof-simple-form name="2" on-saved="onSaved"></fof-simple-form>
+                    <fof-firm-simple-form name="3" on-saved="onSaved"></fof-firm-simple-form>
+                    <gp-fund-simple-form name="4" on-saved="onSaved"></gp-fund-simple-form>
+                    <gp-firm-simple-form name="5" on-saved="onSaved"></gp-firm-simple-form>
+                    <company-simple-form name="7" on-saved="onSaved"></company-simple-form>
+                </iron-pages>
+                <div class="row text-center m-t-20">
+                    <paper-button raised dialog-dismiss>Cancel</paper-button>
+                    <paper-button raised class="custom green" on-tap="_onSave">Accept</paper-button>
+                </div>
+            </div>
+        </paper-dialog>
+    </template>
+    <script>
+        Polymer({
+           is: 'relation-simple-form',
+           onSaved: function(e, data) {
+              this.$.form.toggle();
+              this.fire('relation-saved', data);
+           }
+        });
+    </script>
+</dom-module>

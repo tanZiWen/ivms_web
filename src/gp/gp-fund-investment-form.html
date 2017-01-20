@@ -1,0 +1,155 @@
+<dom-module id="gp-fund-investment-form">
+  <style is='custom-style' include='shared-styles'></style>
+  <template>
+      <iron-ajax id='reqSave'
+                 url='{{ host }}/companyInvestment'
+                 method='POST'
+                 with-credentials
+                 handle-as='json'
+                 content-type="application/json"
+                 on-response='_onSaveResponse'
+                 last-error="_onRequestError"
+                 debounce-duration='5000'></iron-ajax>
+      <iron-localstorage name="dictionary" value="{{ dictionary }}"></iron-localstorage>
+      <paper-dialog id="form" style="width: 70%;" modal>
+          <paper-dialog-scrollable>
+              <h2>{{title}} GP Fund Investment Structure</h2>
+              <div class="vertical layout">
+                  <div class="row">
+                      <company-investment id="companyInvestment" on-select-company-investment="_onSelectCompanyInvestment"></company-investment>
+                  </div>
+                  <div class="row">
+                      <div class="col-md-6">
+                          <paper-input id="investmentDate" label="Investment Date" type="date" value="{{ view.investmentDateStr }}"/>
+                      </div>
+                      <div class="col-md-6">
+                          <paper-input label="Ownership" type="text" value="{{ view.ownership }}"/>
+                      </div>
+                  </div>
+                  <div class="row">
+                      <div class="col-md-6">
+                          <paper-dropdown-menu label="Select Currency" vertical-align="bottom"
+                                               horizontal-align="left" class="fill-wd">
+                              <paper-listbox class="dropdown-content" selected="{{ view.currencyCode }}"
+                                             attr-for-selected="value" style="width:18em;">
+                                  <paper-item value=""></paper-item>
+                                  <template is="dom-repeat" items="{{ dictionary.currency.list}}">
+                                      <paper-item value="{{ item.value }}">{{ item.label }}</paper-item>
+                                  </template>
+                              </paper-listbox>
+                          </paper-dropdown-menu>
+                      </div>
+                      <div class="col-md-6">
+                          <paper-input label="Investment Amount(Mn)" type="text" value="{{ view.investmentAmount }}"/>
+                      </div>
+                  </div>
+                  <div class="row">
+                      <div class="col-md-6">
+                          <paper-input label="Investment Type" type="text" value="{{ view.investmentType }}"/>
+                      </div>
+                      <div class="col-md-6">
+                          <paper-input label="Board Seat" type="text" value="{{ view.boardSeat }}"/>
+                      </div>
+                  </div>
+                  <div class="row">
+                      <div class="col-md-6">
+                          <paper-input label="Shares(Mn)" type="text" value="{{ view.shares }}"/>
+                      </div>
+                  </div>
+                  <div class="row">
+                      <div class="col-md-12">
+                          <paper-textarea label="Notes" value="{{ view.notes }}" rows=5></paper-textarea>
+                      </div>
+                  </div>
+                  <div class="row">
+                      <div class="row m-t-20">
+                          <div class="col-md-11 text-center">
+                              <h2>GP Fund Investment Valuation</h2>
+                          </div>
+                          <div class="col-md-1">
+                              <paper-fab mini icon="add" on-tap="_startAddValuation"></paper-fab>
+                          </div>
+                      </div>
+                    <gp-fund-valuation-form id="gpFundValuationForm" title="[[valuationTitle]]" on-save-valuation="_onSaveValuation"></gp-fund-valuation-form>
+                    <table class="table mm-box">
+                        <thead>
+                        <tr class="th-inverse-success">
+                            <th style="width: 15%" class="text-center">Valuation Date</th>
+                            <th style="width: 15%" class="text-center">Currency</th>
+                            <th style="width: 20%" class="text-center">Unrealized Valuation(Mn)</th>
+                            <th style="width: 20%" class="text-center">Realized Valuation(Mn)</th>
+                            <th style="width: 5%">&nbsp;</th>
+                            <th style="width: 5%">&nbsp;</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                            <template is="dom-repeat" items="[[view.valuations]]" index-as="vIndex">
+                                <tr class="text-center">
+                                    <td>[[item.valuationDateStr]]</td>
+                                    <td>[[item.currency]]</td>
+                                    <td>[[item.unrealizedValuation]]</td>
+                                    <td>[[item.realizedValuation]]</td>
+                                    <td>
+                                        <paper-icon-button icon="create" on-click="_editValuation"></paper-icon-button>
+                                    </td>
+                                    <td>
+                                        <paper-icon-button icon="close" on-click="_delValuation"></paper-icon-button>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                      </table>
+                  </div>
+          </paper-dialog-scrollable>
+          <div class="row text-center m-t-20">
+              <paper-button raised dialog-dismiss on-tap="_onCancel">Cancel</paper-button>
+              <paper-button raised class="custom green" on-tap="_onSave">Accept</paper-button>
+          </div>
+      </paper-dialog>
+      <pc-delete-item id="deleteDlg" on-delete-item="_onDeleteItem"></pc-delete-item>
+    </template>
+    <script>
+        Polymer({
+            is: 'gp-fund-investment-form',
+            properties: {
+                view: {
+                    type: Object,
+                    value: function() {
+                        return {valuations: []}
+                    }
+                }
+            },
+            behaviors: [
+                MyBehaviors.GlobalVariableBehavior,
+                MyBehaviors.ConfigBehavior,
+                MyBehaviors.CompanyInvestmentBehavior
+            ],
+            _startAddValuation: function() {
+                this.valuationTitle = "Add";
+                this.delName = '';
+                this.$.gpFundValuationForm.view={};
+                this.$.gpFundValuationForm.shadowRoot.querySelector('paper-dialog').toggle();
+            },
+            _onSaveValuation: function(e, data) {
+                this.$.gpFundValuationForm.shadowRoot.querySelector('paper-dialog').toggle();
+                this.onCommonInnerModuleSave(data, 'valuations', false);
+            },
+            _editValuation: function(e) {
+                var valuation = e.model.item;
+                this.valuationTitle = "Edit";
+                this.$.gpFundValuationForm.edit(valuation);
+                this.$.gpFundValuationForm.shadowRoot.querySelector('paper-dialog').toggle();
+            },
+            _delValuation: function(e) {
+                this.$.deleteDlg.shadowRoot.querySelector('paper-dialog').toggle();
+                this.delItem = e.model.item;
+                this.delName = 'gpFundInvestmentValuation';
+                this.addName = '';
+                this.delIndex = e.model.vIndex;
+            },
+            resetCompanyInvestment: function() {
+                this.$.companyInvestment.reset();
+            }
+        })
+    </script>
+</dom-module>

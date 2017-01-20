@@ -1,0 +1,560 @@
+<link rel="import" href="./company-form.html"/>
+<dom-module id="company-edit">
+    <style is='custom-style' include='shared-styles'></style>
+    <template>
+        <iron-ajax id='reqList'
+                   url='[[ host ]]/company/[[editId]]'
+                   method='GET'
+                   with-credentials
+                   handle-as='json'
+                   on-response='_onListResponse'
+                   last-error="onRequestError"
+                   debounce-duration='5000'>
+        </iron-ajax>
+        <iron-ajax id='reqSave'
+                   url='[[ host ]]/company'
+                   method="PUT"
+                   with-credentials
+                   handle-as='json'
+                   content-type="application/json"
+                   on-response='_onSaveResponse'
+                   last-error="_onRequestError"
+                   debounce-duration='5000'></iron-ajax>
+        <iron-ajax id="reqSearchRelation"
+                   url="[[host]]/search"
+                   method="GET"
+                   with-credentials="true"
+                   on-response="_onSearchRelationResponse"
+                   debounce-duration='5000'></iron-ajax>
+        <iron-localstorage name="dictionary" value="{{ dictionary }}"></iron-localstorage>
+        <div class="row mc">
+            <div class="row pan fill-wd ct-l">
+                <div class="row text-right">
+                    <div class="col-md-12">
+                        <paper-icon-button icon="launch" class="pull-right" style="color: #428bca;" on-tap="_showEditDlg"></paper-icon-button>
+                    </div>
+                </div>
+                <company-form id="form" on-save="_onEditSave"></company-form>
+                <div class="row text-center">
+                    <h4>Company Basic Information</h4>
+                </div>
+                <div class="row">
+                    <div class="col-md-2 text-muted text-small text-right">Name:</div>
+                    <template is="dom-if" if="[[view.name]]">
+                        <div class="col-md-10 text-left">[[ view.name ]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.name]]">
+                        <div class="col-md-10 text-left">N/A</div>
+                    </template>
+
+
+                </div>
+                <div class="row m-t-20">
+                    <div class="col-md-2 text-muted text-small text-right">Other Name:</div>
+                    <template is="dom-if" if="[[view.alias]]">
+                        <div class="col-md-10 text-left">[[ view.alias ]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.alias]]">
+                        <div class="col-md-10 text-left">N/A</div>
+                    </template>
+                </div>
+                <div class="row m-t-20">
+                    <div class="col-md-2 text-muted text-small text-right">Geography:</div>
+                    <template is="dom-if" if="[[view.geography]]">
+                        <div class="col-md-10 text-left">[[ view.geography ]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.geography]]">
+                        <div class="col-md-10 text-left">N/A</div>
+                    </template>
+                </div>
+                <div class="row m-t-20">
+                    <div class="col-md-2 text-muted text-small text-right">Fiscal Year End:</div>
+                    <template is="dom-if" if="[[view.fiscalYearCode]]">
+                        <div class="col-md-10 text-left">[[ view.fiscalYear ]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.fiscalYearCode]]">
+                        <div class="col-md-10 text-left">N/A</div>
+                    </template>
+                </div>
+                <div class="row m-t-20">
+                    <div class="col-md-2 text-muted text-small text-right">Industry:</div>
+                    <template is="dom-if" if="[[view.industryCode]]">
+                        <div class="col-md-10 text-left">[[ view.industry ]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.industryCode]]">
+                        <div class="col-md-10 text-left">N/A</div>
+                    </template>
+                </div>
+                <div class="row m-t-20">
+                    <div class="col-md-2 text-muted text-small text-right">Notes:</div>
+                    <template is="dom-if" if="[[view.notes]]">
+                        <div class="col-md-10 text-left">[[ view.notes ]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.notes]]">
+                        <div class="col-md-10 text-left">N/A</div>
+                    </template>
+                </div>
+                <div class="row text-center m-t-10">
+                    <h4>Company Registration Information</h4>
+                </div>
+                <div class="row m-t-20">
+
+                    <div class="col-md-2 text-muted text-small text-right">Registration Amount(Mn):</div>
+                    <template is="dom-if" if="[[view.registrationAmount]]">
+                        <div class="col-md-4 text-left">[[ view.currency ]]  [[ view.registrationAmount ]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.registrationAmount]]">
+                        <div class="col-md-4 text-left">N/A</div>
+                    </template>
+                    <div class="col-md-2 text-muted text-small text-right">Registered Date:</div>
+                    <template is="dom-if" if="[[view.geography]]">
+                        <div class="col-md-4 text-left">[[ view.registeredDateStr ]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.geography]]">
+                        <div class="col-md-4 text-left">N/A</div>
+                    </template>
+                </div>
+                <div class="row m-t-20">
+                    <div class="col-md-2 text-muted text-small text-right">Registered Address:</div>
+                    <template is="dom-if" if="[[view.registeredAddress]]">
+                        <div class="col-md-10 text-left">[[ view.registeredAddress ]]</div>
+                    </template>
+                    <template is="dom-if" if="[[!view.registeredAddress]]">
+                        <div class="col-md-10 text-left">N/A</div>
+                    </template>
+                </div>
+                <div class="row text-center m-t-20">
+                    <div class="col-md-11">
+                        <h4>Company Ownership Structure</h4>
+                    </div>
+                    <div class="col-md-1">
+                        <paper-fab mini icon="add" on-tap="_startAddOwnershipStructure"></paper-fab>
+                    </div>
+                </div>
+                <pc-ownership-structure id="ownershipStructure" stockholder-type="rel_company_type"
+                                        title="[[ownershipTitle]]"
+                                        on-ownership-save="_onOwnershipSave">
+                </pc-ownership-structure>
+                <div class="row m-t-20">
+                    <div class="col-md-12 text-center">
+                        <table class="table mm-box">
+                            <thead>
+                            <tr class="th-inverse-success">
+                                <th style="width: 15%" class="text-center">Type</th>
+                                <th style="width: 15%" class="text-center">Investor</th>
+                                <th style="width: 20%" class="text-center">Currency</th>
+                                <th style="width: 20%" class="text-center">Investment Amount(Mn)</th>
+                                <th style="width: 20%" class="text-center">Ownership</th>
+                                <th style="width: 5%">&nbsp;</th>
+                                <th style="width: 5%">&nbsp;</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <template is="dom-repeat" items="[[view.ownershipStructures]]" index-as="vIndex">
+                                <tr class="text-center">
+                                    <td>[[ item.relationTypeLabel ]]</td>
+                                    <td>[[ item.relation.name ]]</td>
+                                    <td>[[ item.currency ]]</td>
+                                    <td>[[ item.investmentAmount ]]</td>
+                                    <td>[[ item.ownership ]]</td>
+                                    <td>
+                                        <paper-icon-button icon="create" on-click="_editOwnership"></paper-icon-button>
+                                    </td>
+                                    <td>
+                                        <paper-icon-button icon="close" on-click="_delOwnership"></paper-icon-button>
+                                    </td>
+                                </tr>
+                            </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="row text-center m-t-20">
+                    <div class="col-md-11">
+                        <h4>IPO</h4>
+                    </div>
+                    <div class="col-md-1">
+                        <paper-fab mini icon="add" on-tap="_startAddIpo"></paper-fab>
+                    </div>
+                </div>
+                <company-ipo-form id="ipoForm" title="[[title]]" on-ipo-save="_onCompanyIpoSave"></company-ipo-form>
+                <div class="row m-t-20">
+                    <div class="col-md-12 text-center">
+                        <table class="table mm-box">
+                            <thead>
+                            <tr class="th-inverse-success">
+                                <th style="width: 30%" class="text-center">Exchange</th>
+                                <th style="width: 15%" class="text-center">IPO Status</th>
+                                <th style="width: 15%" class="text-center">IPO Date</th>
+                                <th style="width: 10%" class="text-center">IPO Code</th>
+                                <th style="width: 15%" class="text-center">IPO Price</th>
+                                <th style="width: 5%">&nbsp;</th>
+                                <th style="width: 5%">&nbsp;</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <template is="dom-repeat" items="[[view.ipos]]" index-as="vIndex">
+                                <tr>
+                                    <td>[[ item.exchange ]]</td>
+                                    <td>[[ item.ipoStatus ]]</td>
+                                    <td>[[ item.ipoDateStr ]]</td>
+                                    <td>[[ item.ipoCode ]]</td>
+                                    <td>[[ item.ipoPrice ]]</td>
+                                    <td>
+                                        <paper-icon-button icon="create" on-click="_editIpo"></paper-icon-button>
+                                    </td>
+                                    <td>
+                                        <paper-icon-button icon="close" on-click="_delIpo"></paper-icon-button>
+                                    </td>
+                                </tr>
+                            </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="row text-center m-t-20">
+                    <div class="col-md-11">
+                        <h4>Financing Round</h4>
+                    </div>
+                    <div class="col-md-1">
+                        <paper-fab mini icon="add" on-tap="_startAddFinancingRound"></paper-fab>
+                    </div>
+                </div>
+                <company-financingRound-form id="financingRoundForm" title="[[title]]" on-financing-save="_onfinancingRoundSave"></company-financingRound-form>
+                <div class="row m-t-20">
+                    <div class="col-sm-12 text-center">
+                        <table class="table mm-box">
+                            <thead>
+                            <tr class="th-inverse-success">
+                                <th style="width: 15%" class="text-center">Financing Round</th>
+                                <th style="width: 15%" class="text-center">Investment Date</th>
+                                <th style="width: 20%" class="text-center">Currency</th>
+                                <th style="width: 20%" class="text-center">Post-money Valuation(Mn)</th>
+                                <th style="width: 20%" class="text-center">Entry PE</th>
+                                <th style="width: 5%">&nbsp;</th>
+                                <th style="width: 5%">&nbsp;</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <template is="dom-repeat" items="[[view.financingRounds]]" index-as="vIndex">
+                                <tr class="text-center">
+                                    <td>[[ item.name ]]</td>
+                                    <td>[[ item.investmentDateStr ]]</td>
+                                    <td>[[ item.currency ]]</td>
+                                    <td>[[ item.postMoneyValuation ]]</td>
+                                    <td>[[ item.entryPe ]]</td>
+                                    <td>
+                                        <paper-icon-button icon="create" on-click="_editfinancingRound"></paper-icon-button>
+                                    </td>
+                                    <td>
+                                        <paper-icon-button icon="close" on-click="_delfinancingRound"></paper-icon-button>
+                                    </td>
+                                </tr>
+                            </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="row text-center m-t-20">
+                    <div class="col-md-11">
+                        <h4>Financials</h4>
+                    </div>
+                    <div class="col-md-1">
+                        <paper-fab mini icon="add" on-tap="_startAddFinancials"></paper-fab>
+                    </div>
+                </div>
+                <company-financials-form id="financialsForm" title="[[title]]" on-financials-save="_onfinancialsSave"></company-financials-form>
+                <div class="row m-t-20">
+                    <div class="col-sm-12 text-center">
+                        <table class="table mm-box">
+                            <thead>
+                            <tr class="th-inverse-success">
+                                <th style="width: 10%" class="text-center">Estimated</th>
+                                <th style="width: 10%" class="text-center">Revenue</th>
+                                <th style="width: 15%" class="text-center">Gross Profit</th>
+                                <th style="width: 15%" class="text-center">Net Income</th>
+                                <th style="width: 15%" class="text-center">Operating Income</th>
+                                <th style="width: 15%" class="text-center">Operating Cash Flow</th>
+                                <th style="width: 5%">&nbsp;</th>
+                                <th style="width: 5%">&nbsp;</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <template is="dom-repeat" items="[[view.financials]]" index-as="vIndex">
+                                <tr class="text-center">
+                                    <td>
+                                        <template is="dom-if" if="{{ item.estimated }}">YES</template>
+                                        <template is="dom-if" if="{{ !item.estimated }}">NO</template>
+                                    </td>
+                                    <td>[[ item.revenue ]]</td>
+                                    <td>[[ item.grossProfit ]]</td>
+                                    <td>[[ item.netIncome ]]</td>
+                                    <td>[[ item.operatingIncome ]]</td>
+                                    <td>[[ item.operatingCashFlow ]]</td>
+                                    <td>
+                                        <paper-icon-button icon="create" on-click="_editFinancials"></paper-icon-button>
+                                    </td>
+                                    <td>
+                                        <paper-icon-button icon="close" on-click="_delFinancials"></paper-icon-button>
+                                    </td>
+                                </tr>
+                            </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="row m-t-20">
+                    <div class="col-md-6 text-right">
+                        <h4>Comps</h4>
+                    </div>
+                    <div class="col-md-6">
+                        <paper-input style="width: 12em;" value="{{companyName}}" on-keyup="_onKeywordChanged" label="input company name" disabled="{{inputEnabled}}"></paper-input>
+                        <template is="dom-if" if="[[companyOpened]]">
+                            <div class="row" style="max-height: 400px; width: 12em; overflow: scroll; margin-top: 0em; margin-left: 0.2em; position: absolute; z-index: 1000; border-left: 1px solid #efefef; background-color: #FFFFFF;">
+                                <template is="dom-repeat" items="{{companies}}">
+                                    <company-dropdown-item company="[[item]]" on-select-company="_onSelectCompanyDropdownItem"></company-dropdown-item>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+                <div class="row m-t-20">
+                    <div class="col-md-12 text-center">
+                        <table class="table mm-box">
+                            <thead>
+                            <tr class="th-inverse-success">
+                                <th style="width: 20%" class="text-center">Name</th>
+                                <th style="width: 20%" class="text-center">Other Name</th>
+                                <th style="width: 20%" class="text-center">Listed Code</th>
+                                <th style="width: 20%" class="text-center">Geography</th>
+                                <th style="width: 5%">&nbsp;</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <template is="dom-repeat" items="[[view.comps]]" index-as="vIndex">
+                                <tr class="text-center">
+                                    <td>[[ item.name ]]</td>
+                                    <td>[[ item.alias ]]</td>
+                                    <td>[[ item.listedCode ]]</td>
+                                    <td>[[ item.geography ]]</td>
+                                    <td>
+                                        <paper-icon-button icon="close" on-click="_delComps"></paper-icon-button>
+                                    </td>
+                                </tr>
+                            </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <paper-toast id="toast" text="[[text]]"></paper-toast>
+        <pc-delete-item id="deleteDlg" on-delete-item="_onDeleteItem"></pc-delete-item>
+    </template>
+    <script>
+        Polymer({
+            is: 'company-edit',
+            properties: {
+                view: {
+                    type: Object,
+                    value: function() {
+                        return {}
+                    }
+                },
+                comp: {
+                    type: Object,
+                    value: function() {
+                        return {}
+                    }
+                },
+                params: {
+                    type: Object,
+                    value: function() {
+                        return {}
+                    }
+                }
+            },
+            behaviors: [
+                MyBehaviors.ConfigBehavior,
+                MyBehaviors.EditBehavior,
+                MyBehaviors.GlobalVariableBehavior
+            ],
+            _onListResponse: function (e, request) {
+                if (request.response.code == 200 || request.response.code == null) {
+                    var view = request.response.company;
+                    this.getDictLabel(view);
+                    for (var i in view.ownershipStructures) {
+                        this.getDictLabel(view.ownershipStructures[i]);
+                    }
+                    if (view.ipos) {
+                        for (var i in view.ipos) {
+                            view.ipos[i].ipoDateStr = moment(view.ipos[i].ipoDate).format("YYYY-MM-DD");
+                            this.getDictLabel(view.ipos[i]);
+                        }
+                    }
+                    if (view.financials) {
+                        for (var i in view.financials) {
+                            view.financials[i].reportingStartDateStr = moment(view.financials[i].reportingStartDate).format("YYYY-MM-DD");
+                            view.financials[i].reportingEndDateStr = moment(view.financials[i].reportingEndDate).format("YYYY-MM-DD");
+                            this.getDictLabel(view.financials[i]);
+                        }
+                    }
+                    if(view.financingRounds) {
+                        for (var i in view.financingRounds) {
+                            if (view.financingRounds[i].investmentDate != null) {
+                                view.financingRounds[i].investmentDateStr = moment(view.financingRounds[i].investmentDate).format("YYYY-MM-DD");
+                            }
+                            this.getDictLabel(view.financingRounds[i]);
+                        }
+                    }
+                    if(request.response.comps != null) {
+                        var comps = _.values(request.response.comps);
+                        for(var i in comps) {
+                            this.getDictLabel(comps[i]);
+                        }
+                        view.comps = comps;
+                    }
+                    this.view = view;
+                    if (this.view.registeredDate != null) {
+                        this.set('view.registeredDateStr', moment(this.view.registeredDate).format("YYYY-MM-DD"));
+                    }
+                } else {
+                    this.text = 'get fail!';
+                    this.$.toast.open();
+                }
+            },
+            _onSaveResponse: function(e, request) {
+                if(request.response.code == 200 || request.response.code == null) {
+                    if(this.delName) {
+                        this.$.deleteDlg.shadowRoot.querySelector('paper-dialog').toggle();
+                        if(this.delName == "comps") {
+                            this.splice('view.comps', this.delIndex, 1);
+                        }
+                    }
+                    if(this.addName == 'ownershipStructure') {
+                        this.$.ownershipStructure.shadowRoot.querySelector('paper-dialog').toggle();
+                    }
+                    if(this.addName == 'comps') {
+                        this.onCommonInnerModuleSave(this.comp, 'comps', false);
+                    }
+                } else {
+                    this.text = 'save fail!';
+                    this.$.toast.open();
+                }
+            },
+            _startAddOwnershipStructure: function () {
+                this.ownershipTitle = 'Add';
+                this.delName = '';
+                this.addName = 'ownershipStructure';
+                this.$.ownershipStructure.shadowRoot.querySelector('paper-dialog').toggle();
+            },
+            _onOwnershipSave: function (e, data){
+                this.onCommonInnerModuleSave(data, 'ownershipStructures', true);
+            },
+            _startAddIpo: function () {
+                this.title = 'Add';
+                this.delName = '';
+                this.addName = 'ipo';
+                this.$.ipoForm.shadowRoot.querySelector('paper-dialog').toggle();
+            },
+            _onCompanyIpoSave: function (e, ipo){
+                this.onCommonInnerModuleSave(ipo, 'ipos', true);
+            },
+            _editIpo: function(e, data) {
+                var ipo = e.model.item;
+                this.title = "Edit";
+                this.addName = 'ipo';
+                this.$.ipoForm.edit(ipo);
+                this.$.ipoForm.shadowRoot.querySelector('paper-dialog').toggle();
+            },
+            _delIpo: function(e) {
+                this.$.deleteDlg.shadowRoot.querySelector('paper-dialog').toggle();
+                this.delItem = e.model.item;
+                this.delName = 'ipo';
+                this.addName = '';
+                this.delIndex = e.model.vIndex;
+            },
+            _onKeywordChanged: function(e) {
+                this.$.reqSearchRelation.params = {type : 7, keyword : this.companyName};
+                this.$.reqSearchRelation.generateRequest();
+            },
+            _onSearchRelationResponse: function(e, request) {
+                if (request.response.code == 200 || request.response.code == null) {
+                    this.companies = request.response.companies;
+                    this.companyOpened = true;
+                }
+            },
+            _onSelectCompanyDropdownItem: function(e, data) {
+                this.companyName = '';
+                this.companyOpened = false;
+                this.delName = '';
+                this.addName = 'comps';
+                if(this.view.compIds == null) {
+                    this.view.compIds = [];
+                }
+                this.comp = data;
+                this.view.compIds.push(data.id);
+                this.$.reqSave.body = JSON.stringify(this.view);
+                this.$.reqSave.generateRequest();
+            },
+            _delComps: function(e) {
+                this.$.deleteDlg.shadowRoot.querySelector('paper-dialog').toggle();
+                this.delItem = e.model.item;
+                this.delName = 'comps';
+                this.addName = '';
+                this.delIndex = e.model.vIndex;
+            },
+            _startAddFinancials: function () {
+                this.title = 'Add';
+                this.delName = '';
+                this.addName = 'financial';
+                this.$.financialsForm.shadowRoot.querySelector('paper-dialog').toggle();
+            },
+            _onfinancialsSave: function (e, financials){
+                this.onCommonInnerModuleSave(financials, 'financials', true);
+            },
+            _editFinancials: function(e, data) {
+                var financial = e.model.item;
+                this.title = "Edit";
+                this.addName = 'financial';
+                this.$.financialsForm.edit(financial);
+                this.$.financialsForm.shadowRoot.querySelector('paper-dialog').toggle();
+            },
+            _delFinancials: function(e) {
+                this.$.deleteDlg.shadowRoot.querySelector('paper-dialog').toggle();
+                this.delItem = e.model.item;
+                this.delName = 'financial';
+                this.addName = '';
+                this.delIndex = e.model.vIndex;
+            },
+            _startAddFinancingRound: function () {
+                this.title = 'Add';
+                this.delName = '';
+                this.addName = 'financingRound';
+                this.$.financingRoundForm.shadowRoot.querySelector('paper-dialog').toggle();
+            },
+            _onfinancingRoundSave: function (e, financingRound){
+                this.onCommonInnerModuleSave(financingRound, 'financingRounds', true);
+            },
+            _editfinancingRound: function(e, data) {
+                var financingRound = e.model.item;
+                this.title = "Edit";
+                this.addName = 'financingRound';
+                this.$.financingRoundForm.edit(financingRound);
+                this.$.financingRoundForm.shadowRoot.querySelector('paper-dialog').toggle();
+            },
+            _delfinancingRound: function(e) {
+                this.$.deleteDlg.shadowRoot.querySelector('paper-dialog').toggle();
+                this.delItem = e.model.item;
+                this.delName = 'financingRound';
+                this.addName = '';
+                this.delIndex = e.model.vIndex;
+            },
+            _onEditSave: function(e, data) {
+                this.set('view', {});
+                this.getDictLabel(data);
+                this.set('view', data);
+            }
+        });
+    </script>
+</dom-module>

@@ -1,0 +1,59 @@
+<script>
+  window.MyBehaviors = window.MyBehaviors || {};
+  MyBehaviors.RouteBehavior = {
+    properties: {
+      router: {
+        type: Boolean,
+        readOnly: true,
+        value: true
+      },
+      route: {
+        type: String,
+        //        value: '',
+        observer: '_routeChanged'
+      },
+      localRoute: {
+        type: String,
+        notify: true
+        //        value: '',
+        //        readonly: true
+      }
+    },
+    _routeChanged: function(newValue, oldValue) {
+      var spliterIndex = newValue.indexOf('.');
+      var subroute = '';
+      var localRoute = '';
+      console.log(this.localName + ':: route changed from ' + oldValue + ' to ' + newValue);
+
+      if (spliterIndex > 0) {
+        localRoute = newValue.substring(0, spliterIndex);
+        subroute = newValue.substring(spliterIndex + 1);
+      } else {
+        localRoute = newValue;
+      }
+      var selectedNodes = this.querySelectorAll('[data-route="' + localRoute + '"]');
+      if (subroute !== '') {
+        if (selectedNodes == null || selectedNodes.length == 0) {
+          console.error('bad route ' + newValue + ', no element with route ' + localRoute + ' found in' + this.nodeName);
+          return;
+        }
+
+        for (var i = 0; i < selectedNodes.length; i++) {
+          if(selectedNodes[i].router) {
+            selectedNodes[i].route = subroute;
+          }
+        }
+      }
+
+      if (selectedNodes != null || selectedNodes.length != 0) {
+        for (var i = 0; i < selectedNodes.length; i++) {
+          if (typeof selectedNodes[i].onRouteHit === 'function') {
+            selectedNodes[i].onRouteHit();
+          }
+        }
+      }
+
+      this.localRoute = localRoute;
+    }
+  };
+</script>

@@ -1,0 +1,112 @@
+<dom-module id="gp-fund-valuation-form">
+    <style is='custom-style' include='shared-styles'></style>
+    <template>
+        <iron-localstorage name="dictionary" value="{{ dictionary }}"></iron-localstorage>
+        <paper-dialog id="form" style="width: 70%;" modal>
+            <paper-dialog-scrollable>
+                <h2>{{title}} GP Funds Investment Valuation Information</h2>
+                <div class="vertical layout">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <paper-input id="valuationDate" label="Valuation Date" type="date" value="{{ view.valuationDateStr }}"/>
+                        </div>
+                        <div class="col-md-6">
+                            <paper-dropdown-menu label="Select Currency" vertical-align="bottom"
+                                                 horizontal-align="left" class="fill-wd">
+                                <paper-listbox class="dropdown-content" selected="{{ view.currencyCode }}"
+                                               attr-for-selected="value" style="width:18em;">
+                                    <paper-item value=""></paper-item>
+                                    <template is="dom-repeat" items="{{ dictionary.currency.list}}">
+                                        <paper-item value="{{ item.value }}">{{ item.label }}</paper-item>
+                                    </template>
+                                </paper-listbox>
+                            </paper-dropdown-menu>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <paper-input label="Unrealized Valuation(Mn)" type="text" value="{{ view.unrealizedValuation }}"/>
+                        </div>
+                        <div class="col-md-6">
+                            <paper-input label="Realized Valuation(Mn)" type="text" value="{{ view.realizedValuation }}"/>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <paper-input label="Total Valuation(Mn)" type="text" value="{{ view.totalValuation }}"/>
+                        </div>
+                        <div class="col-md-6">
+                            <paper-input label="Multiple" type="text" value="{{ view.multiple }}"/>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <paper-input label="Gross IRR" type="text" value="{{ view.grossIRR }}"/>
+                        </div>
+                        <div class="col-md-6">
+                            <paper-input label="Net IRR" type="text" value="{{ view.netIRR }}"/>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <paper-input label="Unrealized Shares(Mn)" type="text" value="{{ view.unrealizedShares }}"/>
+                        </div>
+                        <div class="col-md-6">
+                            <paper-input label="Realized Shares(Mn)" type="text" value="{{ view.realizedShares }}"/>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <paper-input label="Ownership" type="text" value="{{ view.ownership }}"/>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <paper-textarea label="Notes" value="{{ view.notes }}" rows=5></paper-textarea>
+                        </div>
+                    </div>
+                </div>
+            </paper-dialog-scrollable>
+            <div class="row text-center m-t-20">
+                <paper-button raised dialog-dismiss on-tap="_onCancel">Cancel</paper-button>
+                <paper-button raised class="custom green" on-tap="_onSave">Accept</paper-button>
+            </div>
+        </paper-dialog>
+    </template>
+    <script>
+        Polymer({
+            is: 'gp-fund-valuation-form',
+            properties: {
+                view: {
+                    type: Object,
+                    value: function() {
+                        return {}
+                    }
+                }
+            },
+            _onSave: function() {
+                var invalid = true;
+                if (this.view.valuationDateStr && !this.view.valuationDateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                    this.$.valuationDate.invalid = true;
+                    invalid = false;
+                }
+                if (!invalid) {
+                    return;
+                }
+                this.view.valuationDate = new Date(this.view.valuationDateStr);
+                this.fire('save-valuation', this.view);
+                this.reset();
+            },
+            edit: function(data) {
+                data.valuationDateStr = moment(data.valuationDate).format("YYYY-MM-DD");
+                this.view = data;
+            },
+            _onCancel: function () {
+                this.reset();
+            },
+            reset: function () {
+                this.view = {};
+            }
+        })
+    </script>
+</dom-module>
